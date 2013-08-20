@@ -12,7 +12,7 @@ use \Icinga\Module\Monitoring\Form\Command\CommentForm; // Used by constant FORM
 
 class CommentFormTest extends BaseFormTest
 {
-    const FORMCLASS = 'Monitoring\Form\Command\CommentForm';
+    const FORMCLASS = '\Icinga\Module\Monitoring\Form\Command\CommentForm';
 
     public function testCorrectCommentValidation()
     {

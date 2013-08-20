@@ -16,7 +16,7 @@ use \Icinga\Util\DateTimeFactory;
 
 class RescheduleNextCheckFormTest extends BaseFormTest
 {
-    const FORM_CLASS = 'Monitoring\Form\Command\RescheduleNextCheckForm';
+    const FORM_CLASS = '\Icinga\Module\Monitoring\Form\Command\RescheduleNextCheckForm';
 
     /**
      * Set up the default time zone

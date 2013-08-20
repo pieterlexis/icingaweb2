@@ -16,7 +16,7 @@ use \Icinga\Util\DateTimeFactory;
 
 class AcknowledgeFormTest extends BaseFormTest
 {
-    const FORMCLASS = 'Monitoring\Form\Command\AcknowledgeForm';
+    const FORMCLASS = '\Icinga\Module\Monitoring\Form\Command\AcknowledgeForm';
 
     /**
      * Set up the default time zone

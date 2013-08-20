@@ -14,7 +14,7 @@ use \Zend_Test_PHPUnit_ControllerTestCase;
 
 class CommandWithIdentifierFormTest extends BaseFormTest
 {
-    const FORMCLASS = "Monitoring\Form\Command\CommandWithIdentifierForm";
+    const FORMCLASS = "\Icinga\Module\Monitoring\Form\Command\CommandWithIdentifierForm";
     public function testForm()
     {
         $form = $this->getRequestForm(array(), self::FORMCLASS);
