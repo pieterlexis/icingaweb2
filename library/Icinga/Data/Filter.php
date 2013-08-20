@@ -33,11 +33,11 @@ class Filter extends ArrayIterator
         foreach ($params as $k => $v) {
             $filter[] = array($k, $v);
         }
-        return $filter;  
+        return $filter;
     }
 
     /**
-     * Get filtere as key-value array
+     * Get filter as key-value array
      *
      * @return array
      */
