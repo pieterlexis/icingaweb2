@@ -149,11 +149,10 @@ class Monitoring_ListController extends ModuleActionController
      */
     public function hostgroupsAction()
     {
-        $this->view->hostgroups = $this->backend->select()
-            ->from('hostgroup', array(
+        $this->view->hostgroups = $this->query('hostgroup', array(
             'hostgroup_name',
             'hostgroup_alias',
-        ))->applyRequest($this->_request);
+        ));
     }
 
     /**
@@ -167,7 +166,7 @@ class Monitoring_ListController extends ModuleActionController
             ->from('servicegroup', array(
             'servicegroup_name',
             'servicegroup_alias',
-        ))->applyRequest($this->_request);
+        ));
     }
 
     /**
@@ -177,11 +176,10 @@ class Monitoring_ListController extends ModuleActionController
      */
     public function contactgroupsAction()
     {
-        $this->view->contactgroups = $this->backend->select()
-            ->from('contactgroup', array(
+        $this->view->contactgroups = $this->query('contactgroup', array(
             'contactgroup_name',
             'contactgroup_alias',
-        ))->applyRequest($this->_request);
+        ));
     }
 
     /**
@@ -239,7 +237,7 @@ class Monitoring_ListController extends ModuleActionController
         $this->inheritCurrentSortColumn();
     }
 
-    protected function query($view, $columns)
+    protected function query($view, $columns = null)
     {
         $extra = preg_split(
             '~,~',
@@ -247,10 +245,14 @@ class Monitoring_ListController extends ModuleActionController
             -1,
             PREG_SPLIT_NO_EMPTY
         );
-
+        if (empty($extra)) {
+            $cols = $columns;
+        } else {
+            $cols = array_merge($columns, $extra);
+        }
         $this->view->extraColumns = $extra;
         $query = $this->backend->select()
-            ->from($view, array_merge($columns, $extra))
+            ->from($view, $cols)
             ->applyRequest($this->_request);
         $this->handleFormatRequest($query);
         return $query;
