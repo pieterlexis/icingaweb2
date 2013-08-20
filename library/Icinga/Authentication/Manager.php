@@ -111,7 +111,7 @@ class Manager
         if (isset($options["groupBackendClass"])) {
             $this->groupBackend = $options["groupBackendClass"];
         } else {
-            $this->groupBackend = $this->initBestBackend(self::BACKEND_TYPE_GROUP, $config);
+//            $this->groupBackend = $this->initBestBackend(self::BACKEND_TYPE_GROUP, $config);
         }
 
         if (!isset($options["sessionClass"])) {
