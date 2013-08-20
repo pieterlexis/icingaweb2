@@ -91,6 +91,16 @@ class AbstractView extends AbstractQuery
     protected $sortDefaults = array();
 
     /**
+     * Filters that will be enforced (e.g. AND for SQL), will be used for auth
+     * restrictions
+     *
+     * TODO: rename to enforcedFilters?
+     *
+     * @var Array
+     */
+    protected $forcedFilters = array();
+
+    /**
      * Whether this view provides a specific column name
      *
      * @param  string $column Column name
@@ -185,7 +195,8 @@ class AbstractView extends AbstractQuery
 
     // TODO: applyAuthFilters(Auth $auth = null)
     //       AbstractView will enforce restrictions as provided by the Auth
-    //       backend
+    //       backend. Those filters work like normal ones and have to be stored
+    //       by applyAuthFilters to $this->forcedFilters
 
     /**
      * Apply an array of filters. This might become obsolete or even improved
@@ -269,6 +280,9 @@ class AbstractView extends AbstractQuery
             $query = new $class($this->ds, $this->columns);
             foreach ($this->filters as $f) {
                 $query->where($f[0], $f[1]);
+            }
+            foreach ($this->forcedFilters as $col => $filter) {
+                $query->where($col, $filter);
             }
             foreach ($this->order_columns as $col) {
 
