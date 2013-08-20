@@ -4,6 +4,7 @@ namespace Icinga\Module\Monitoring\View;
 
 use Icinga\Data\AbstractQuery;
 use Icinga\Data\Filter;
+use Icinga\Data\PivotTable;
 
 /**
  * AbstractView provides consistent views to our Icinga Backends
@@ -13,11 +14,11 @@ use Icinga\Data\Filter;
  *
  * You should not directly instantiate such a view but always go through the
  * Monitoring Backend. Using the Backend's select() method selecting from
- * 'virtualtable' returns a Monitoring\View\VirtualtableView instance.
+ * 'virtualtable' returns a Icinga\Module\Monitoring\View\VirtualtableView instance.
  *
  * Usage example:
  * <code>
- * use \Icinga\Module\Monitoring\Backend;
+ * use Icinga\Module\Monitoring\Backend;
  * $backend = Backend::getInstance();
  * $query = $backend->select()->from('viewname', array(
  *     'one_column',
@@ -287,6 +288,12 @@ class AbstractView extends AbstractQuery
     public function fetchPairs()
     {
         return $this->getQuery()->fetchPairs();
+    }
+
+    public function pivot($verticalColumn, $horizontalColumn)
+    {
+        $pivot = new PivotTable($this, $verticalColumn, $horizontalColumn);
+        return $pivot;
     }
 
     public function isValidFilterColumn($column)
