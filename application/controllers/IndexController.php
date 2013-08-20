@@ -44,7 +44,7 @@ class IndexController extends ActionController
     {
         parent::preDispatch(); // -> auth :(
         if ($this->action_name !== 'welcome') {
-            $this->redirect('index/welcome');
+            $this->redirectNow('index/welcome');
         }
     }
 
