@@ -129,16 +129,6 @@ class HoststatusQuery extends AbstractQuery
             'hoststatus' => true,
         );
     }
-    
-    protected function joinStatus()
-    {
-        $this->requireVirtualTable('services');
-    }
-    
-    protected function joinServiceStatus()
-    {
-        $this->requireVirtualTable('services');
-    }
 
     protected function joinServices()
     {
