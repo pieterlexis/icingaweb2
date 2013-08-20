@@ -166,8 +166,8 @@ class Manager
             }
         }
         if (!isset($db)) {
-            $msg = 'Failed to create any authentication backend, login will not be possible.';
-            Logger::error($msg);
+            $msg = 'Failed to create any "%s" authentication backend, login will not be possible.';
+            Logger::error($msg, $target);
             return null;
         }
         return $db;
