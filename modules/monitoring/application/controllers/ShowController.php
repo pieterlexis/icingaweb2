@@ -369,13 +369,11 @@ class Monitoring_ShowController extends ModuleActionController
             $id = $this->_getParam('ticket');
             $ticketModule = 'rt';
             $this->render();
-            $this->redirect(
+            $this->_forward(
                 'ticket',
                 'show',
                 $ticketModule,
-                array(
-                    'id' => $id
-                )
+                array('id' => $id)
             );
         }
     }
