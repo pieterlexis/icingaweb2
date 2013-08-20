@@ -1,6 +1,6 @@
 <?php
 
-namespace Monitoring\Backend\Livestatus\Query;
+namespace Icinga\Module\Monitoring\Backend\Livestatus\Query;
 
 use Icinga\Data\AbstractQuery;
 

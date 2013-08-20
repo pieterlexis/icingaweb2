@@ -29,7 +29,7 @@
 use Icinga\Web\Controller\ModuleActionController;
 use Icinga\Web\Hook;
 use Icinga\File\Csv;
-use Monitoring\Backend;
+use \Icinga\Module\Monitoring\Backend;
 use Icinga\Application\Benchmark;
 use Icinga\Web\Widget\Tabextension\OutputFormat;
 use Icinga\Web\Widget\Tabextension\DashboardAction;

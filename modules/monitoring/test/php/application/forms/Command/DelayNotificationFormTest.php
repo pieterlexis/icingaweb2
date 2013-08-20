@@ -8,7 +8,7 @@ namespace Test\Monitoring\Forms\Command;
 require_once realpath(__DIR__ . '/BaseFormTest.php');
 require_once realpath(__DIR__ . '/../../../../../application/forms/Command/DelayNotificationForm.php');
 
-use \Monitoring\Form\Command\DelayNotificationForm; // Used by constant FORM_CLASS
+use \Icinga\Module\Monitoring\Form\Command\DelayNotificationForm; // Used by constant FORM_CLASS
 
 class DelayNotificationFormTest extends BaseFormTest
 {

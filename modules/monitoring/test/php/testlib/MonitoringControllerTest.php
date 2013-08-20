@@ -110,8 +110,8 @@ namespace Test\Monitoring\Testlib
     use \Icinga\Protocol\Statusdat\Reader;
     use \Icinga\Web\Controller\ActionController;
     use \Icinga\Application\DbAdapterFactory;
-    use \Monitoring\Backend\Ido;
-    use \Monitoring\Backend\Statusdat;
+    use \Icinga\Module\Monitoring\Backend\Ido;
+    use \Icinga\Module\Monitoring\Backend\Statusdat;
     use \Test\Monitoring\Testlib\DataSource\TestFixture;
     use \Test\Monitoring\Testlib\DataSource\DataSourceTestSetup;
 

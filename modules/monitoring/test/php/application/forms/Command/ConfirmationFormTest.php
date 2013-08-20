@@ -9,7 +9,7 @@ require_once __DIR__. '/../../../../../application/forms/Command/CommandForm.php
 
 use \Zend_View;
 use \Zend_Test_PHPUnit_ControllerTestCase;
-use Monitoring\Form\Command\CommandForm;
+use \Icinga\Module\Monitoring\Form\Command\CommandForm;
 
 class CommandFormTest extends BaseFormTest
 {

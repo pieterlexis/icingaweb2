@@ -26,12 +26,12 @@
  */
 // {{{ICINGA_LICENSE_HEADER}}}
 
-namespace Monitoring;
+namespace Icinga\Module\Monitoring;
 
 use \Icinga\Application\Config as IcingaConfig;
 use \Icinga\Authentication\Manager as AuthManager;
 use \Exception;
-use \Monitoring\Backend\AbstractBackend;
+use \Icinga\Module\Monitoring\Backend\AbstractBackend;
 
 /**
  * Container for monitoring backends
@@ -136,7 +136,7 @@ class Backend
             $config = self::$backendConfigs[$name];
             $type = $config->type;
             $type[0] = strtoupper($type[0]);
-            $class = '\\Monitoring\\Backend\\' . $type;
+            $class = '\\Icinga\\Module\\Monitoring\\Backend\\' . $type;
             self::$instances[$name] = new $class($config);
         }
         return self::$instances[$name];
