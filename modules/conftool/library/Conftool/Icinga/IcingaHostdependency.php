@@ -4,6 +4,6 @@ namespace Icinga\Module\Conftool\Icinga;
 
 class IcingaHostDependency extends IcingaObjectDefinition
 {
-    // protected $key = ??;
+    //protected $key = ''; //dummy
 }
 

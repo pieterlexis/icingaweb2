@@ -4,6 +4,6 @@ namespace Icinga\Module\Conftool\Icinga;
 
 class IcingaServiceescalation extends IcingaObjectDefinition
 {
-    // protected $key = ??;
+    protected $key = 'first_notification'; //dummy
 }
 

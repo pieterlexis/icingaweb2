@@ -6,6 +6,7 @@ abstract class IcingaObjectDefinition
 {
     protected $key = 'name';
     protected $props;
+    protected $_parents = array();
     protected $is_template = false;
     protected $type;
 
@@ -108,10 +109,18 @@ abstract class IcingaObjectDefinition
             } elseif ($this->{$this->key}) {
                return $this->{$this->key};
             } else {
+               echo "FOOBAR: no key found. but template.";
                return null; // Will fail badly
             }
         } else {
-            return $this->{$this->key};
+            if ($this->{$this->key}) {
+                return $this->{$this->key};
+            } elseif ($this->name) {
+                return $this->name;
+            } else {
+                echo "no template: no key/name found.";
+                return null; // Will fail badly
+            }
         }
     }
 
@@ -142,8 +151,24 @@ abstract class IcingaObjectDefinition
         if (isset($this->props->$key)) {
             return $this->props->$key;
         } else {
+            foreach ($this->_parents as $parent) {
+                if ($parent->$key !== null) {
+                    return $parent->$key;
+                }
+            }
             return null;
         }
+    }
+
+    public function addParent(IcingaTemplate $parent)
+    {
+        $this->_parents[] = $parent;
+        return $this;
+    }
+
+    public function getParents()
+    {
+        return $this->_parents;
     }
 
     public function validate()

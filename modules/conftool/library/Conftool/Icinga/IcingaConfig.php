@@ -6,13 +6,15 @@ class IcingaConfig
 {
     protected $base_config;
     protected $config_file;
-    protected $definition_files = array();
+
+    protected $allDefinitions = array();
     protected $templates = array();
+
+    protected $definition_files = array();
     protected $definitions = array();
     protected $host_index = array();
     protected $group_members = array();
     protected $host_groups = array();
-    protected $all_services = array();
 
     public function __construct($file)
     {
@@ -143,6 +145,8 @@ class IcingaConfig
             $this->discoverDefinitionFiles($dir);
         }
         $this->parseDefinitionFiles();
+        $this->resolveParents();
+        $this->createDefinitionIndexes();
         $this->resolveServices();
     }
 
@@ -157,11 +161,11 @@ class IcingaConfig
                 ));
             }
             $content = file_get_contents($file);
-            $this->parseDefinitions($content);
+            $this->parseDefinitions($content, $file);
         }
     }
 
-    public function parseDefinitions($content)
+    public function parseDefinitions($content, $file)
     {
         $content = preg_replace('~^\s*[\#\;].*$~m', '', $content);
         $content = preg_replace('~([^\\\])\;.*$~m', '$1', $content);
@@ -183,7 +187,7 @@ class IcingaConfig
                 } elseif (preg_match('~^\s*define\s+([a-z]+)\s*$~', $line, $match)) {
                     $buffer .= $line;
                 } else {
-                    throw new IcingaConfigException(sprintf('Cannot parse config file line: "%s"', $line));
+                    throw new IcingaConfigException(sprintf('Cannot parse config line: "%s" in file "%s"', $line, $file));
                 }
                 continue;
             }
@@ -194,7 +198,7 @@ class IcingaConfig
             $kv = preg_split('~\s+~', $line, 2, PREG_SPLIT_NO_EMPTY);
             if (! empty($kv)) {
                 if (! isset($kv[1])) {
-                    // Skip illegal lines
+                    // Skip illegal lines. TODO: Shall we show a notice?
                     continue;
                 }
                 $vals->$kv[0] = rtrim($kv[1]);
@@ -208,22 +212,17 @@ class IcingaConfig
             if ($current_type == 'serviceescalation') continue;
             if ($current_type == 'hostextinfo') continue;
             if ($current_type == 'serviceextinfo') continue;
-
-            $def = IcingaObjectDefinition::factory($current_type, $vals);
-            $def->validate();
-            if ($def instanceof IcingaTemplate) {
-                $this->addTemplate($def);
-            } elseif ($def instanceof IcingaService) {
-                $this->addService($def);
-            } else {
-                $this->addDefinition($def);
-            }
+            if ($current_type == 'hostdependency') continue;
+            if ($current_type == 'servicedependency') continue;
+            $this->addDefinition(
+                IcingaObjectDefinition::factory($current_type, $vals)
+            );
         }
     }
 
     protected function splitComma($string)
     {
-        return preg_split('/,\s*/', $string, null, PREG_SPLIT_NO_EMPTY);
+        return preg_split('/\s*,\s*/', $string, null, PREG_SPLIT_NO_EMPTY);
     }
 
     protected function addHostGroupMapping($host, $group)
@@ -273,6 +272,42 @@ class IcingaConfig
 
     public function addDefinition(IcingaObjectDefinition $definition)
     {
+        $this->allDefinitions[] = $definition;
+        if ($definition->isTemplate()) {
+            $this->templates[(string) $definition] = $definition;
+        }
+        return $this;
+    }
+
+    protected function resolveParents()
+    {
+        foreach ($this->allDefinitions as $definition) {
+            if (! $definition->use) { return; }
+            $uses = $this->splitComma($definition->use);
+            foreach ($uses as $use) {
+                if (! array_key_exists($use, $this->templates)) {
+                    throw new IcingaDefinitionException(
+                        sprintf('Object inherits from unknown template "%s"', $use) . print_r($definition)
+                    );
+                }
+                $definition->addParent($this->templates[$use]);
+            }
+        }
+    }
+
+    protected function createDefinitionIndexes()
+    {
+        foreach ($this->allDefinitions as $definition) {
+            $this->createDefinitionIndex($definition);
+        }
+    }
+
+    protected function createDefinitionIndex($definition)
+    {
+        if ($definition instanceof IcingaService) {
+            return;
+        }
+
         $id = (string) $definition;
         
         $type = $definition->getDefinitionType();
@@ -283,75 +318,87 @@ class IcingaConfig
             ));
         }
         $this->definitions[$type][$id] = $definition;
-        if (! $definition->isTemplate()) {
-            if ($definition instanceof IcingaHostgroup) {
-                $members = $this->splitComma($definition->members);
-                foreach ($members as $member) {
-                    $this->addHostGroupMapping($member, (string) $definition);
-                }
-            }
-            if ($definition instanceof IcingaHost) {
-                if ($definition->hostgroups)  {
-                    $members = $this->splitComma($definition->hostgroups);
-                    foreach ($members as $member) {
-                        $this->addHostGroupMapping((string) $definition, $member);
-                    }
-                }
-                $this->host_index[strtolower($definition->address)] = $id;
-                $this->host_index[strtolower($definition->host_name)] = $id;
-                $this->host_index[strtolower($definition->alias)] = $id;
+
+        if ($definition->isTemplate()) {
+            return;
+        }
+
+        if ($definition instanceof IcingaHostgroup) {
+            $members = $this->splitComma($definition->members);
+            foreach ($members as $member) {
+                $this->addHostGroupMapping($member, (string) $definition);
             }
         }
-    }
-
-    // Still EXPERIMENTAL and UGLY:
-    protected function addService(IcingaService $service)
-    {
-        $this->all_services[] = $service;
+        if ($definition instanceof IcingaHost) {
+            if ($definition->hostgroups)  {
+                $members = $this->splitComma($definition->hostgroups);
+                foreach ($members as $member) {
+                    $this->addHostGroupMapping((string) $definition, $member);
+                }
+            }
+            $this->host_index[strtolower($definition->address)] = $id;
+            $this->host_index[strtolower($definition->host_name)] = $id;
+            $this->host_index[strtolower($definition->alias)] = $id;
+        }
     }
 
     protected function resolveServices()
     {
-        foreach ($this->all_services as $service) {
-            // $this->addDefinition($service); -> kein __toString...
-            $hostgroups = $service->hostgroup_name
-                        ? $this->splitComma($service->hostgroup_name)
-                        : array();
-            $hosts = $service->host_name
-                   ? $this->splitComma($service->host_name)
-                   : array();
-            if (empty($hosts) && empty($hostgroups) && $service->isTemplate()) {
-                continue;
+        foreach ($this->allDefinitions as $definition) {
+            if ($definition instanceof IcingaService) {
+                $this->resolveService($definition);
+                return;
             }
+        }
+    }
 
-            $assigned = false;
-            foreach (array_unique($hosts) as $host) {
-                if (isset($this->definitions['host'][$host])) {
-                    $assigned = true;
-                    if (! $this->definitions['host'][$host]->hasService($service)) {
-                        $this->definitions['host'][$host]->addService($service);
-                    }
-                } elseif (substr($host, 0, 1) === '!' && isset($this->definitions['host'][substr($host, 1)])) {
-                    $assigned = true;
-                    $host = substr($host, 1);
-                    if (! $this->definitions['host'][$host]->hasBlacklistedService($service)) {
-                        $this->definitions['host'][$host]->blacklistService($service);
-                    }
-                } else {
-                    printf('Cannot assign service "%s" to host "%s"', $service, $host);
+    protected function resolveService(IcingaService $service)
+    {
+        if ($service->isTemplate()) {
+            return;
+        }
+
+        $hostgroups = $service->hostgroup_name
+                    ? $this->splitComma($service->hostgroup_name)
+                    : array();
+        $hosts = $service->host_name
+               ? $this->splitComma($service->host_name)
+               : array();
+        if (empty($hosts) && empty($hostgroups) && $service->isTemplate()) {
+            continue;
+        }
+
+        $assigned = false;
+        foreach (array_unique($hosts) as $host) {
+            if (isset($this->definitions['host'][$host])) {
+                $assigned = true;
+                if (! $this->definitions['host'][$host]->hasService($service)) {
+                    $this->definitions['host'][$host]->addService($service);
                 }
+            } elseif (substr($host, 0, 1) === '!' && isset($this->definitions['host'][substr($host, 1)])) {
+                $assigned = true;
+                $host = substr($host, 1);
+                if (! $this->definitions['host'][$host]->hasBlacklistedService($service)) {
+                    $this->definitions['host'][$host]->blacklistService($service);
+                }
+            } else {
+                printf('Cannot assign service "%s" to host "%s"', $service, $host);
             }
-            foreach (array_unique($hostgroups) as $hostgroup) {
-                if (isset($this->definitions['hostgroup'][$hostgroup])) {
-                    $assigned = true;
+        }
+        foreach (array_unique($hostgroups) as $hostgroup) {
+            if (isset($this->definitions['hostgroup'][$hostgroup])) {
+                $assigned = true;
+                try {
                     $this->definitions['hostgroup'][$hostgroup]->addService($service);
-                } else {
-                    printf('Cannot assign service "%s" to hostgroup "%s"', $service, $hostgroup);
+                } catch (Exception $e) {
+                    echo 'Exception: ',  $e->getMessage(), ' for hostgroup ', $hostgroup, '\n';
                 }
+            } else {
+                printf('Cannot assign service "%s" to hostgroup "%s"', $service, $hostgroup);
             }
-            if (! $assigned) {
-                echo 'Unassigned service: ' . print_r($service, 1);
-            }
+        }
+        if (! $assigned) {
+            echo 'Unassigned service: ' . print_r($service, 1);
         }
     }
 
