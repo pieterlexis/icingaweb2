@@ -8,11 +8,9 @@ class Icinga2Hostgroup extends Icinga2ObjectDefinition
 
     protected $v1ArrayProperties = array(
         'hostgroup_members',
-        'members'
     );
 
     protected $v1AttributeMap = array(
-        'members'           => 'members',
         'alias'             => 'display_name',
         'notes'             => 'vars.notes',
         'action_url'        => 'vars.action_url',
@@ -22,5 +20,13 @@ class Icinga2Hostgroup extends Icinga2ObjectDefinition
 
     protected function convertMembers($members)
     {
+        foreach ($this->splitComma($members) as $member) {
+            if (substr($member, 0, 1) === '!') {
+                $member = substr($member, 1);
+                $this->ignoreWhere('host.name == ' . $this->migrateLegacyString($member));
+            } else {
+                $this->assignWhere('host.name == ' . $this->migrateLegacyString($member));
+            }
+        }
     }
 }

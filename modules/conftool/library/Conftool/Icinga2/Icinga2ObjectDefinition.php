@@ -12,6 +12,7 @@ class Icinga2ObjectDefinition
     protected $v1ArrayProperties = array();
     protected $type;
     protected $assigns = array();
+    protected $ignores = array();
 
     public function __construct($name)
     {
@@ -28,9 +29,24 @@ class Icinga2ObjectDefinition
         return $this->properties[$key];
     }
 
+    protected function assignWhere($assign)
+    {
+        $this->assigns[] = $assign;
+    }
+
+    protected function ignoreWhere($ignore)
+    {
+        $this->ignores[] = $ignore;
+    }
+
     protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object)
     {
         foreach ($object->getAttributes() as $key => $value) {
+            $func = 'convert' . ucfirst($key);
+            if (method_exists($this, $func)) {
+                $this->$func($value);
+                continue;
+            }
             if (! array_key_exists($key, $this->v1AttributeMap)) {
                 throw new Icinga2ConfigMigrationException(
                     sprintf('Cannot convert the "%s" property of given v1 object: ', $key) . print_r($object, 1)
@@ -118,14 +134,29 @@ class Icinga2ObjectDefinition
         }
         return $str;
     }
+
+    protected function getAssignmentsAsString()
+    {
+        $str = '';
+        foreach ($this->assigns as $assign) {
+            $str .= sprintf("    assign where %s\n", $assign);
+        }
+        foreach ($this->ignores as $ignore) {
+            $str .= sprintf("    ignore where %s\n", $ignore);
+        }
+        return $str;
+    }
+
  // inherits "plugin-check-command"
+
     public function __toString()
     {
         return sprintf(
-            "object %s \"%s\" {\n%s}\n\n",
+            "object %s \"%s\" {\n%s%s}\n\n",
             $this->type,
             $this->name,
-            $this->getAttributesAsString()
+            $this->getAttributesAsString(),
+            $this->getAssignmentsAsString()
         );
     }
 
