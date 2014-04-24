@@ -90,6 +90,11 @@ class Icinga2ObjectDefinition
                 $new->setAttributesFromIcingaObjectDefinition($object);
                 break;
 
+            case 'contactgroup': // TODO: find a better rename way
+                $new = new Icinga2Usergroup((string) $object);
+                $new->setAttributesFromIcingaObjectDefinition($object);
+                break;
+
             default:
                 throw new Icinga2ConfigMigrationException(
                     sprintf(
