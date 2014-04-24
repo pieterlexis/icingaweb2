@@ -12,9 +12,9 @@ class Icinga2Hostgroup extends Icinga2ObjectDefinition
 
     protected $v1AttributeMap = array(
         'alias'             => 'display_name',
-        'notes'             => 'vars.notes',
-        'action_url'        => 'vars.action_url',
-        'notes_url'         => 'vars.notes_url',
+        'notes'             => 'notes',
+        'action_url'        => 'action_url',
+        'notes_url'         => 'notes_url',
         'hostgroup_members' => 'groups',
     );
 

@@ -85,6 +85,11 @@ class Icinga2ObjectDefinition
                 $new->setAttributesFromIcingaObjectDefinition($object);
                 break;
 
+            case 'servicegroup':
+                $new = new Icinga2Servicegroup((string) $object);
+                $new->setAttributesFromIcingaObjectDefinition($object);
+                break;
+
             default:
                 throw new Icinga2ConfigMigrationException(
                     sprintf(
