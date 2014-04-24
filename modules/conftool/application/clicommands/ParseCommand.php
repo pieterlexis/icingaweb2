@@ -15,6 +15,15 @@ class ParseCommand extends Command
         foreach ($config->getDefinitions('command') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
         }
+        foreach ($config->getDefinitions('host') as $object) {
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+        }
+        foreach ($config->getDefinitions('service') as $object) {
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+        }
+        foreach ($config->getDefinitions('contact') as $object) {
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+        }
         foreach ($config->getDefinitions('hostgroup') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
         }

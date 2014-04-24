@@ -10,7 +10,10 @@ class Icinga2ObjectDefinition
     protected $name;
     protected $v1AttributeMap = array();
     protected $v1ArrayProperties = array();
+    protected $v1RejectedAttributeMap = array();
     protected $type;
+    protected $_parents = array();
+    protected $is_template = false;
     protected $assigns = array();
     protected $ignores = array();
 
@@ -42,18 +45,36 @@ class Icinga2ObjectDefinition
     protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object)
     {
         foreach ($object->getAttributes() as $key => $value) {
+
+            //rejects
+            if ($key !== null && in_array($key, $this->v1RejectedAttributeMap)) {
+                continue;
+            }
+
+            //conversion
             $func = 'convert' . ucfirst($key);
             if (method_exists($this, $func)) {
                 $this->$func($value);
                 continue;
             }
+
+            //template
+            $this->is_template = $object->isTemplate();
+
+
+            //mapping
             if (! array_key_exists($key, $this->v1AttributeMap)) {
                 throw new Icinga2ConfigMigrationException(
                     sprintf('Cannot convert the "%s" property of given v1 object: ', $key) . print_r($object, 1)
                 );
             }
+
+            //migrate
             $value = $this->migrateValue($value, $key);
-            $this->{ $this->v1AttributeMap[$key] } = $value;
+
+            if ($value !== null) {
+                $this->{ $this->v1AttributeMap[$key] } = $value;
+            }
         }
     }
 
@@ -77,6 +98,21 @@ class Icinga2ObjectDefinition
         switch ($object->getDefinitionType()) {
             case 'command':
                 $new = new Icinga2Command((string) $object);
+                $new->setAttributesFromIcingaObjectDefinition($object);
+                break;
+
+            case 'host':
+                $new = new Icinga2Host((string) $object);
+                $new->setAttributesFromIcingaObjectDefinition($object);
+                break;
+
+            case 'service':
+                $new = new Icinga2Service((string) $object);
+                $new->setAttributesFromIcingaObjectDefinition($object);
+                break;
+
+            case 'contact':
+                $new = new Icinga2User((string) $object);
                 $new->setAttributesFromIcingaObjectDefinition($object);
                 break;
 
@@ -131,6 +167,7 @@ class Icinga2ObjectDefinition
     protected function arrayToString($array)
     {
         $string = '[ ' . implode(', ', $array) . ' ]';
+        return $string;
     }
 
     protected function getAttributesAsString()
@@ -157,12 +194,23 @@ class Icinga2ObjectDefinition
         return $str;
     }
 
+    public function isTemplate()
+    {
+        return $this->is_template;
+    }
+
  // inherits "plugin-check-command"
 
     public function __toString()
     {
+        $prefix = "object";
+        if ($this->isTemplate()) {
+            $prefix = "template";
+        }
+        
         return sprintf(
-            "object %s \"%s\" {\n%s%s}\n\n",
+            "%s %s \"%s\" {\n%s%s}\n\n",
+            $prefix,
             $this->type,
             $this->name,
             $this->getAttributesAsString(),
