@@ -16,6 +16,7 @@ class Icinga2ObjectDefinition
     protected $is_template = false;
     protected $assigns = array();
     protected $ignores = array();
+    protected $imports = array();
 
     public function __construct($name)
     {
@@ -42,6 +43,11 @@ class Icinga2ObjectDefinition
         $this->ignores[] = $ignore;
     }
 
+    protected function imports($import)
+    {
+        $this->imports[] = $import;
+    }
+
     protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object)
     {
         foreach ($object->getAttributes() as $key => $value) {
@@ -51,7 +57,13 @@ class Icinga2ObjectDefinition
                 continue;
             }
 
-            //conversion
+            // template imports
+            if ($key == "use") {
+                $this->imports = $this->migrateUseImport($value, $key);
+                continue;
+            }
+
+            //conversion (also 'use')
             $func = 'convert' . ucfirst($key);
             if (method_exists($this, $func)) {
                 $this->$func($value);
@@ -76,6 +88,17 @@ class Icinga2ObjectDefinition
                 $this->{ $this->v1AttributeMap[$key] } = $value;
             }
         }
+    }
+
+    protected function migrateUseImport($value, $key = null)
+    {
+        if ($key != "use") {
+                throw new Icinga2ConfigMigrationException(
+                    sprintf('Wrong key "%s" as template property of given v1 object: ', $key) . print_r($object, 1)
+                );
+        }
+
+        return $this->splitArray($value, ",", true, false);
     }
 
     protected function migrateValue($value, $key = null)
@@ -148,6 +171,21 @@ class Icinga2ObjectDefinition
         return preg_split('/\s*,\s*/', $string, null, PREG_SPLIT_NO_EMPTY);
     }
 
+    protected function splitArray($string, $delim, $unique = false, $sort = false)
+    {
+        $arr = explode($delim, $string);
+
+        if ($unique == true) {
+            $arr = array_unique($arr);
+        }
+
+        if ($sort == true) {
+            sort($arr);
+        }
+
+        return $arr;
+    }
+
     protected function migrateLegacyString($string)
     {
         $string = preg_replace('~\\\~', '\\\\', $string);
@@ -182,6 +220,14 @@ class Icinga2ObjectDefinition
         return $str;
     }
 
+    protected function getImportsAsString() {
+        $str = '';
+        foreach ($this->imports as $import) {
+            $str .= sprintf("    import \"%s\"\n", $import);
+        }
+        return $str;
+    }
+
     protected function getAssignmentsAsString()
     {
         $str = '';
@@ -199,6 +245,11 @@ class Icinga2ObjectDefinition
         return $this->is_template;
     }
 
+    public function hasImport()
+    {
+        return $this->has_import;
+    }
+
  // inherits "plugin-check-command"
 
     public function __toString()
@@ -209,10 +260,11 @@ class Icinga2ObjectDefinition
         }
         
         return sprintf(
-            "%s %s \"%s\" {\n%s%s}\n\n",
+            "%s %s \"%s\" {\n%s%s%s}\n\n",
             $prefix,
             $this->type,
             $this->name,
+            $this->getImportsAsString(),
             $this->getAttributesAsString(),
             $this->getAssignmentsAsString()
         );

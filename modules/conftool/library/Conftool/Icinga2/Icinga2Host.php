@@ -26,7 +26,6 @@ class Icinga2Host extends Icinga2ObjectDefinition
         'max_check_attempts' => 'max_check_attempts',
         'check_command' => 'check_command',
         //rename
-        'use' => 'import',
         'alias' => 'display_name',
         'hostgroups' => 'groups',
         'active_checks_enabled' => 'enable_active_checks',
