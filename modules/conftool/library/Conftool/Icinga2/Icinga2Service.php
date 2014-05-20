@@ -81,13 +81,31 @@ class Icinga2Service extends Icinga2ObjectDefinition
 
     protected function convertHost_name($name)
     {
-        // TODO add apply and assign
-        $this->host_name = '"'.$name.'"';
+        $arr = $this->splitComma($name);
+        $this->is_apply = true;
+
+        foreach ($arr as $hostname) {
+            if (substr($hostname, 0, 1) === '!') {
+                $hostname = substr($hostname, 1);
+                $this->ignoreWhere('host.name == ' . $this->migrateLegacyString($hostname));
+            } else {
+                $this->assignWhere('host.name == ' . $this->migrateLegacyString($hostname));
+            }
+        }
     }
 
     protected function convertHostgroup_name($name)
     {
-        // TODO add apply and assign
-        return $name;
+        $arr = $this->splitComma($name);
+        $this->is_apply = true;
+
+        foreach ($arr as $hostgroupname) {
+            if (substr($hostgroupname, 0, 1) === '!') {
+                $hostgroupname = substr($hostgroupname, 1);
+                $this->ignoreWhere($this->migrateLegacyString($hostgroupname) . ' in host.groups');
+            } else {
+                $this->assignWhere($this->migrateLegacyString($hostgroupname) . ' in host.groups');
+            }
+        }
     }
 }

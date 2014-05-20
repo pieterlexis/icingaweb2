@@ -14,6 +14,7 @@ class Icinga2ObjectDefinition
     protected $type;
     protected $_parents = array();
     protected $is_template = false;
+    protected $is_apply = false;
     protected $assigns = array();
     protected $ignores = array();
     protected $imports = array();
@@ -275,6 +276,11 @@ class Icinga2ObjectDefinition
         return $this->is_template;
     }
 
+    public function isApply()
+    {
+        return $this->is_apply;
+    }
+
     public function hasImport()
     {
         return $this->has_import;
@@ -287,6 +293,9 @@ class Icinga2ObjectDefinition
         $prefix = "object";
         if ($this->isTemplate()) {
             $prefix = "template";
+        }
+        if ($this->isApply()) {
+            $prefix = "apply";
         }
         
         return sprintf(
