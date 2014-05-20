@@ -57,22 +57,30 @@ class Icinga2ObjectDefinition
                 continue;
             }
 
+            //template
+            $this->is_template = $object->isTemplate();
+            $this->_parents = $object->getParents();
+
+            //ugly 1.x hacks
+            if($this->is_template && ($key == "service_description" || $key == "host_name")) {
+                continue; //skip invalid template attributes
+            }
+            if (!$this->is_template && $key == "name") {
+                continue; //skip invalid object attributes
+            }
+
             // template imports
             if ($key == "use") {
                 $this->imports = $this->migrateUseImport($value, $key);
                 continue;
             }
 
-            //conversion (also 'use')
+            //conversion of different attributes
             $func = 'convert' . ucfirst($key);
             if (method_exists($this, $func)) {
                 $this->$func($value);
                 continue;
             }
-
-            //template
-            $this->is_template = $object->isTemplate();
-
 
             //mapping
             if (! array_key_exists($key, $this->v1AttributeMap)) {
@@ -98,7 +106,7 @@ class Icinga2ObjectDefinition
                 );
         }
 
-        return $this->splitArray($value, ",", true, false);
+        return $this->splitComma($value);
     }
 
     protected function migrateValue($value, $key = null)
@@ -111,6 +119,9 @@ class Icinga2ObjectDefinition
             return $values;
         }
         if (preg_match('/^\d+/', $value)) {
+            if (preg_match('/check_interval/', $key)) { //different handling for *_interval
+                return $value."m";
+            }
             return $value;
         }
         return $this->migrateLegacyString($value);
@@ -130,6 +141,7 @@ class Icinga2ObjectDefinition
                 break;
 
             case 'service':
+                //print "Found service ".$object;
                 $new = new Icinga2Service((string) $object);
                 $new->setAttributesFromIcingaObjectDefinition($object);
                 break;
@@ -163,6 +175,7 @@ class Icinga2ObjectDefinition
                     )
                 );
         }
+
         return $new;
     }
 
@@ -171,9 +184,9 @@ class Icinga2ObjectDefinition
         return preg_split('/\s*,\s*/', $string, null, PREG_SPLIT_NO_EMPTY);
     }
 
-    protected function splitArray($string, $delim, $unique = false, $sort = false)
+    protected function str2Arr($string, $delim, $unique = false, $sort = false)
     {
-        $arr = explode($delim, $string);
+        $arr = preg_split('/\s*'.$delim.'\s*/', $string, null, PREG_SPLIT_NO_EMPTY);
 
         if ($unique == true) {
             $arr = array_unique($arr);

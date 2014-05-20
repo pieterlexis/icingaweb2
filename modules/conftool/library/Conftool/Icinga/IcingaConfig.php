@@ -35,6 +35,11 @@ class IcingaConfig
         }
     }
 
+    public function getTemplates()
+    {
+        return $this->templates;
+    }
+
     public function dump()
     {
         foreach ($this->definitions as $type => $definitions) {
@@ -276,6 +281,7 @@ class IcingaConfig
         if ($definition->isTemplate()) {
             $this->templates[(string) $definition] = $definition;
         }
+
         return $this;
     }
 
@@ -304,11 +310,16 @@ class IcingaConfig
 
     protected function createDefinitionIndex($definition)
     {
+        /* services cannot be indexed as they are not unique */
         if ($definition instanceof IcingaService) {
             return;
         }
 
-        $id = (string) $definition;
+        try {
+            $id = (string) $definition;
+        } catch(Exception $e) {
+            echo 'Exception: ',  $e->getMessage(), '\n';
+        }
         
         $type = $definition->getDefinitionType();
         if (isset($this->definitions[$type][$id])) {
@@ -347,13 +358,16 @@ class IcingaConfig
         foreach ($this->allDefinitions as $definition) {
             if ($definition instanceof IcingaService) {
                 $this->resolveService($definition);
-                return;
+                //return;
             }
         }
     }
 
+    //TODO this only works if the object has 'host_name' or 'hostgroup_name'
+    //but not if that attribute is hidden in the template tree
     protected function resolveService(IcingaService $service)
     {
+        //TODO service templates can be linked too? - NO
         if ($service->isTemplate()) {
             return;
         }
@@ -364,8 +378,13 @@ class IcingaConfig
         $hosts = $service->host_name
                ? $this->splitComma($service->host_name)
                : array();
+
+        if (empty($hosts) && empty($hostgroups)) {
+            //var_dump($service); //FIXME lookup the attributes in the template tree?
+            return;
+        }
         if (empty($hosts) && empty($hostgroups) && $service->isTemplate()) {
-            continue;
+            return;
         }
 
         $assigned = false;

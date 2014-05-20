@@ -110,6 +110,7 @@ abstract class IcingaObjectDefinition
                return $this->{$this->key};
             } else {
                echo "FOOBAR: no key found. but template.";
+               var_dump($this);
                return null; // Will fail badly
             }
         } else {
@@ -119,6 +120,7 @@ abstract class IcingaObjectDefinition
                 return $this->name;
             } else {
                 echo "no template: no key/name found.";
+                var_dump($this);
                 return null; // Will fail badly
             }
         }

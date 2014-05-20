@@ -12,11 +12,18 @@ class ParseCommand extends Command
     {
         $configfile = $this->params->shift();
         $config = IcingaConfig::parse($configfile);
+
+        //objects
         foreach ($config->getDefinitions('command') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
         }
         foreach ($config->getDefinitions('host') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+
+            //direct host->service relation
+            foreach($object->getServices() as $service) {
+                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service)->dump();
+            }
         }
         foreach ($config->getDefinitions('service') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
@@ -26,12 +33,22 @@ class ParseCommand extends Command
         }
         foreach ($config->getDefinitions('hostgroup') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+
+            //indirect hostgroup->service relation
+            foreach($object->getServices() as $service) {
+                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service)->dump();
+            }
         }
         foreach ($config->getDefinitions('servicegroup') as $object) {
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
         }
         foreach ($config->getDefinitions('contactgroup') as $object) { // TODO: Find a better way than hardcoded
             Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+        }
+
+        //templates
+        foreach($config->getTemplates() as $template) {
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($template)->dump();
         }
     }
 }

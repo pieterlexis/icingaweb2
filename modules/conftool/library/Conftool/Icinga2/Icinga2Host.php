@@ -37,6 +37,7 @@ class Icinga2Host extends Icinga2ObjectDefinition
         'flap_detection_enabled' => 'enaple_flapping',
         'process_perf_data' => 'enable_perfdata',
         'notifications_enabled' => 'enable_notifications',
+        'is_volatile' => 'volatile',
 
 
         //legacy attributes (nagios2)
@@ -46,6 +47,7 @@ class Icinga2Host extends Icinga2ObjectDefinition
 
     protected $v1RejectedAttributeMap = array(
         'host_name',
+        'name',
         'initial_state',
         'obsess_over_host',
         'check_freshness',
@@ -57,6 +59,7 @@ class Icinga2Host extends Icinga2ObjectDefinition
         'stalking_options',
         'statusmap_image',
         '2d_coords',
+        'parallelize_check',
         //ignore,
         'notification_interval',
         'first_notification_delay',
