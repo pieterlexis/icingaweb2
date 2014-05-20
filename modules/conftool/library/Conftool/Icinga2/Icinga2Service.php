@@ -69,11 +69,6 @@ class Icinga2Service extends Icinga2ObjectDefinition
     // in a new notification object
 
     // TODO
-    protected function convertCheck_interval($check_interval)
-    {
-
-    }
-
     protected function convertContacts($contacts)
     {
         // TODO: create notification objects and commands
@@ -87,7 +82,7 @@ class Icinga2Service extends Icinga2ObjectDefinition
     protected function convertHost_name($name)
     {
         // TODO add apply and assign
-        $this->host_name = $name;
+        $this->host_name = '"'.$name.'"';
     }
 
     protected function convertHostgroup_name($name)

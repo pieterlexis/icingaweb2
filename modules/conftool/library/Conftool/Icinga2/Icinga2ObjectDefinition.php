@@ -98,6 +98,17 @@ class Icinga2ObjectDefinition
         }
     }
 
+    //generic conversion functions
+    protected function convertCheck_interval($value)
+    {
+        $this->check_interval = $value.'m';
+    }
+
+    protected function convertRetry_interval($value)
+    {
+        $this->retry_interval = $value.'m';
+    }
+
     protected function migrateUseImport($value, $key = null)
     {
         if ($key != "use") {
@@ -118,6 +129,12 @@ class Icinga2ObjectDefinition
             }
             return $values;
         }
+
+        //special handling for address
+        if ($key == "address") {
+            return $this->migrateLegacyString($value);
+        }
+        
         if (preg_match('/^\d+/', $value)) {
             if (preg_match('/check_interval/', $key)) { //different handling for *_interval
                 return $value."m";

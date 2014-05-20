@@ -13,8 +13,6 @@ class Icinga2Host extends Icinga2ObjectDefinition
     protected $v1AttributeMap = array(
         //keep
         'display_name' => 'display_name',
-        'address' => 'address',
-        'address6' => 'address6',
         'notes' => 'notes',
         'notes_url' => 'notes_url',
         'action_url' => 'action_url',
@@ -72,6 +70,14 @@ class Icinga2Host extends Icinga2ObjectDefinition
     // TODO: Figure out how to handle
     // - notification_interval, first_notification_delay, notification_period, notification_options
     // in a new notification object
+
+    protected function convertAddress($string) {
+        $this->address = $this->migrateLegacyString($string);
+    }
+
+    protected function convertAddress6($string) {
+        $this->address6 = $this->migrateLegacyString($string);
+    }
 
     // TODO
     protected function convertCheck_interval($check_interval)
