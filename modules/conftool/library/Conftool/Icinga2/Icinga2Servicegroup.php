@@ -18,7 +18,7 @@ class Icinga2Servicegroup extends Icinga2ObjectDefinition
         'servicegroup_members' => 'groups',
     );
 
-    protected function convertMembers($members)
+    protected function convertMembers($members, IcingaConfig $config = null)
     {
         $count = 0;
         $sg_members = $this->splitComma($members);

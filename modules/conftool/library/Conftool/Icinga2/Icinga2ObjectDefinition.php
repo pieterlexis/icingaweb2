@@ -2,6 +2,7 @@
 
 namespace Icinga\Module\Conftool\Icinga2;
 
+use Icinga\Module\Conftool\Icinga\IcingaConfig;
 use Icinga\Module\Conftool\Icinga\IcingaObjectDefinition;
 
 class Icinga2ObjectDefinition
@@ -49,7 +50,7 @@ class Icinga2ObjectDefinition
         $this->imports[] = $import;
     }
 
-    protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object)
+    protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object, IcingaConfig $config)
     {
         foreach ($object->getAttributes() as $key => $value) {
 
@@ -79,7 +80,7 @@ class Icinga2ObjectDefinition
             //conversion of different attributes
             $func = 'convert' . ucfirst($key);
             if (method_exists($this, $func)) {
-                $this->$func($value);
+                $this->$func($value, $config);
                 continue;
             }
 
@@ -100,12 +101,12 @@ class Icinga2ObjectDefinition
     }
 
     //generic conversion functions
-    protected function convertCheck_interval($value)
+    protected function convertCheck_interval($value, IcingaConfig $config = null)
     {
         $this->check_interval = $value.'m';
     }
 
-    protected function convertRetry_interval($value)
+    protected function convertRetry_interval($value, IcingaConfig $config = null)
     {
         $this->retry_interval = $value.'m';
     }
@@ -137,51 +138,48 @@ class Icinga2ObjectDefinition
         }
         
         if (preg_match('/^\d+/', $value)) {
-            if (preg_match('/check_interval/', $key)) { //different handling for *_interval
-                return $value."m";
-            }
             return $value;
         }
         return $this->migrateLegacyString($value);
     }
 
-    public static function fromIcingaObjectDefinition(IcingaObjectDefinition $object)
+    public static function fromIcingaObjectDefinition(IcingaObjectDefinition $object, IcingaConfig $config)
     {
         switch ($object->getDefinitionType()) {
             case 'command':
                 $new = new Icinga2Command((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'host':
                 $new = new Icinga2Host((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'service':
                 //print "Found service ".$object;
                 $new = new Icinga2Service((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'contact':
                 $new = new Icinga2User((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'hostgroup':
                 $new = new Icinga2Hostgroup((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'servicegroup':
                 $new = new Icinga2Servicegroup((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'contactgroup': // TODO: find a better rename way
                 $new = new Icinga2Usergroup((string) $object);
-                $new->setAttributesFromIcingaObjectDefinition($object);
+                $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             default:

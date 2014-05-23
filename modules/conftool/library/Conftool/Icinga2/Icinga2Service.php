@@ -59,9 +59,7 @@ class Icinga2Service extends Icinga2ObjectDefinition
         'notification_interval',
         'first_notification_delay',
         'notification_period',
-        'notification_options',
-        'contacts',
-        'contact_groups'
+        'notification_options'
     );
 
     // TODO: Figure out how to handle
@@ -69,17 +67,33 @@ class Icinga2Service extends Icinga2ObjectDefinition
     // in a new notification object
 
     // TODO
-    protected function convertContacts($contacts)
+    protected function convertContacts($contacts, IcingaConfig $config)
     {
+        if ($config === null) {
+            throw new Icinga2ConfigMigrationException("Cannot convert contacts. No configuration hive provided.");
+        }
+
         // TODO: create notification objects and commands
+        $arr = $this->splitComma($contacts);
+
+        foreach ($arr as $contact) {
+            $object = $config->GetObject($contact, 'contact');
+
+            print "Converting contact " . $contact . " " . var_dump($object);
+        }
     }
 
-    protected function convertContactgroups($contactgroups)
+    protected function convertContact_groups($contactgroups, IcingaConfig $config = null)
     {
         // TODO: create notification objects and commands
+        $arr = $this->splitComma($contactgroups);
+
+        //get all group members (make them unique contacts)
+
+        //same story as for a single contact
     }
 
-    protected function convertHost_name($name)
+    protected function convertHost_name($name, IcingaConfig $config = null)
     {
         $arr = $this->splitComma($name);
         $this->is_apply = true;
@@ -94,7 +108,7 @@ class Icinga2Service extends Icinga2ObjectDefinition
         }
     }
 
-    protected function convertHostgroup_name($name)
+    protected function convertHostgroup_name($name, IcingaConfig $config = null)
     {
         $arr = $this->splitComma($name);
         $this->is_apply = true;

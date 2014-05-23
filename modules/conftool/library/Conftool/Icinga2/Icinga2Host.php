@@ -62,42 +62,35 @@ class Icinga2Host extends Icinga2ObjectDefinition
         'notification_interval',
         'first_notification_delay',
         'notification_period',
-        'notification_options',
-        'contacts',
-        'contact_groups'
+        'notification_options'
     );
 
     // TODO: Figure out how to handle
     // - notification_interval, first_notification_delay, notification_period, notification_options
     // in a new notification object
 
-    protected function convertAddress($string) {
+    protected function convertAddress($string, IcingaConfig $config = null) {
         $this->address = $this->migrateLegacyString($string);
     }
 
-    protected function convertAddress6($string) {
+    protected function convertAddress6($string, IcingaConfig $config = null) {
         $this->address6 = $this->migrateLegacyString($string);
     }
 
     // TODO
-    protected function convertCheck_interval($check_interval)
-    {
-
-    }
-
-    protected function convertParents($parents)
+    protected function convertParents($parents, IcingaConfig $config = null)
     {
         foreach ($this->splitComma($parents) as $parent) {
             // TODO: create a new host dependency
         }
     }
 
-    protected function convertContacts($contacts)
+    protected function convertContacts($contacts, IcingaConfig $config)
     {
         // TODO: create notification objects and commands
     }
 
-    protected function convertContactgroups($contactgroups)
+    protected function convertContact_groups($contactgroups, IcingaConfig $config)
     {
         // TODO: create notification objects and commands
     }

@@ -15,24 +15,24 @@ class ParseCommand extends Command
 
         //objects
         foreach ($config->getDefinitions('command') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
         }
         foreach ($config->getDefinitions('host') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
 
             //direct host->service relation
             foreach($object->getServices() as $service) {
-                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service)->dump();
+                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service, $config)->dump();
             }
         }
         foreach ($config->getDefinitions('service') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
         }
         foreach ($config->getDefinitions('contact') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
         }
         foreach ($config->getDefinitions('hostgroup') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
 
             //indirect hostgroup->service relation
             foreach($object->getServices() as $service) {
@@ -40,15 +40,15 @@ class ParseCommand extends Command
             }
         }
         foreach ($config->getDefinitions('servicegroup') as $object) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
         }
         foreach ($config->getDefinitions('contactgroup') as $object) { // TODO: Find a better way than hardcoded
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($object, $config)->dump();
         }
 
         //templates
         foreach($config->getTemplates() as $template) {
-            Icinga2ObjectDefinition::fromIcingaObjectDefinition($template)->dump();
+            Icinga2ObjectDefinition::fromIcingaObjectDefinition($template, $config)->dump();
         }
     }
 }

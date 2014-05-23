@@ -15,7 +15,7 @@ class Icinga2Usergroup extends Icinga2ObjectDefinition
         'contactgroup_members' => 'groups',
     );
 
-    protected function convertMembers($members)
+    protected function convertMembers($members, IcingaConfig $config = null)
     {
         foreach ($this->splitComma($members) as $member) {
             if (substr($member, 0, 1) === '!') {

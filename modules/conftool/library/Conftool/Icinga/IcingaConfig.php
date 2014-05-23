@@ -454,6 +454,27 @@ class IcingaConfig
         return false;
     }
 
+    public function hasObject($search)
+    {
+        if (! is_array($search)) $search = array($search);
+        foreach ($search as $s) {
+            if (array_key_exists(strtolower($s), $this->definitions)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function getObject($search, $type)
+    {
+        if (! is_array($search)) $search = array($search);
+        foreach ($search as $s) {
+            if (! $this->hasHost($s)) continue;
+            return $this->definitions[$type][strtolower($s)];
+        }
+        return false;
+    }
+
     protected function discoverDefinitionFiles($dir)
     {
         $files = array();
