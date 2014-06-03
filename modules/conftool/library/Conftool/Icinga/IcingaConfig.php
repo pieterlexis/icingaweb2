@@ -467,11 +467,10 @@ class IcingaConfig
 
     public function getObject($search, $type)
     {
-        if (! is_array($search)) $search = array($search);
-        foreach ($search as $s) {
-            if (! $this->hasHost($s)) continue;
-            return $this->definitions[$type][strtolower($s)];
+        if (defined($this->definitions[$type][strtolower($search)])) {
+            return $this->definitions[$type][strtolower($search)];
         }
+
         return false;
     }
 

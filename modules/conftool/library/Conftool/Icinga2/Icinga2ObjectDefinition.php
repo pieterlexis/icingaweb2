@@ -3,6 +3,8 @@
 namespace Icinga\Module\Conftool\Icinga2;
 
 use Icinga\Module\Conftool\Icinga\IcingaConfig;
+use Icinga\Module\Conftool\Icinga\IcingaService;
+use Icinga\Module\Conftool\Icinga\IcingaHost;
 use Icinga\Module\Conftool\Icinga\IcingaObjectDefinition;
 
 class Icinga2ObjectDefinition
@@ -19,10 +21,11 @@ class Icinga2ObjectDefinition
     protected $assigns = array();
     protected $ignores = array();
     protected $imports = array();
+    protected $_config;
 
-    public function __construct($name)
+    public function __construct(IcingaObjectDefinition $name)
     {
-        $this->name = $name;
+        $this->name = (string) $name;
     }
 
     public function __set($key, $val)
@@ -52,16 +55,17 @@ class Icinga2ObjectDefinition
 
     protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object, IcingaConfig $config)
     {
+        //template, parents and config
+        $this->is_template = $object->isTemplate();
+        $this->_parents = $object->getParents();
+        //$config = $object->_config;
+
         foreach ($object->getAttributes() as $key => $value) {
 
             //rejects
             if ($key !== null && in_array($key, $this->v1RejectedAttributeMap)) {
                 continue;
             }
-
-            //template
-            $this->is_template = $object->isTemplate();
-            $this->_parents = $object->getParents();
 
             //ugly 1.x hacks
             if($this->is_template && ($key == "service_description" || $key == "host_name")) {
@@ -77,10 +81,47 @@ class Icinga2ObjectDefinition
                 continue;
             }
 
+            //convert host/service notifications
+            if ($key == "contacts" && ($object instanceof IcingaService || $object instanceof IcingaHost)) {
+                $arr = $this->splitComma($value);
+
+                var_dump($object);
+                var_dump($arr);
+
+                foreach ($arr as $contact) {
+
+                    //strip additive character
+                    $name = preg_replace('/^\+/', '', $contact);
+                    $contact_obj = $config->GetObject($name, 'contact');
+
+                    var_dump($contact_obj);
+
+                    //TODO
+                    //1. host|service_notification_commands in contact template tree?
+                    //2. split array, get commands
+                    //3. add new notification objects based on "hostname-servicename-commandname"
+                    //4. add attributes: users, converted options, interval
+                }
+
+                continue;
+            }
+
+            if ($key == "contact_groups" && ($object instanceof IcingaService || $object instanceof IcingaHost)) {
+                $arr = $this->splitComma($value);
+
+                foreach ($arr as $contactgroup) {
+                    $contactgroup_obj = $config->GetObject($contactgroup, 'contactgroup');
+
+                    //var_dump($contactgroup_obj);
+                }
+
+                continue;
+            }
+
             //conversion of different attributes
             $func = 'convert' . ucfirst($key);
             if (method_exists($this, $func)) {
-                $this->$func($value, $config);
+                $this->$func($value);
                 continue;
             }
 
@@ -101,12 +142,12 @@ class Icinga2ObjectDefinition
     }
 
     //generic conversion functions
-    protected function convertCheck_interval($value, IcingaConfig $config = null)
+    protected function convertCheck_interval($value)
     {
         $this->check_interval = $value.'m';
     }
 
-    protected function convertRetry_interval($value, IcingaConfig $config = null)
+    protected function convertRetry_interval($value)
     {
         $this->retry_interval = $value.'m';
     }
@@ -147,38 +188,38 @@ class Icinga2ObjectDefinition
     {
         switch ($object->getDefinitionType()) {
             case 'command':
-                $new = new Icinga2Command((string) $object);
+                $new = new Icinga2Command($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'host':
-                $new = new Icinga2Host((string) $object);
+                $new = new Icinga2Host($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'service':
                 //print "Found service ".$object;
-                $new = new Icinga2Service((string) $object);
+                $new = new Icinga2Service($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'contact':
-                $new = new Icinga2User((string) $object);
+                $new = new Icinga2User($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'hostgroup':
-                $new = new Icinga2Hostgroup((string) $object);
+                $new = new Icinga2Hostgroup($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'servicegroup':
-                $new = new Icinga2Servicegroup((string) $object);
+                $new = new Icinga2Servicegroup($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 
             case 'contactgroup': // TODO: find a better rename way
-                $new = new Icinga2Usergroup((string) $object);
+                $new = new Icinga2Usergroup($object);
                 $new->setAttributesFromIcingaObjectDefinition($object, $config);
                 break;
 

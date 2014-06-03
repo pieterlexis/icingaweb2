@@ -36,7 +36,7 @@ class MigrateCommand extends Command
 
             //indirect hostgroup->service relation
             foreach($object->getServices() as $service) {
-                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service)->dump();
+                Icinga2ObjectDefinition::fromIcingaObjectDefinition($service, $config)->dump();
             }
         }
         foreach ($config->getDefinitions('servicegroup') as $object) {

@@ -2,6 +2,8 @@
 
 namespace Icinga\Module\Conftool\Icinga2;
 
+use Icinga\Module\Conftool\Icinga\IcingaConfig;
+
 class Icinga2Service extends Icinga2ObjectDefinition
 {
     protected $type = 'Service';
@@ -67,33 +69,20 @@ class Icinga2Service extends Icinga2ObjectDefinition
     // in a new notification object
 
     // TODO
-    protected function convertContacts($contacts, IcingaConfig $config)
+    protected function convertContacts($contacts)
     {
-        if ($config === null) {
-            throw new Icinga2ConfigMigrationException("Cannot convert contacts. No configuration hive provided.");
-        }
-
-        // TODO: create notification objects and commands
-        $arr = $this->splitComma($contacts);
-
-        foreach ($arr as $contact) {
-            $object = $config->GetObject($contact, 'contact');
-
-            print "Converting contact " . $contact . " " . var_dump($object);
-        }
     }
 
-    protected function convertContact_groups($contactgroups, IcingaConfig $config = null)
+    protected function convertContact_groups($contactgroups)
     {
-        // TODO: create notification objects and commands
-        $arr = $this->splitComma($contactgroups);
-
-        //get all group members (make them unique contacts)
-
-        //same story as for a single contact
     }
 
-    protected function convertHost_name($name, IcingaConfig $config = null)
+    protected function convertCheck_command($command) {
+        //TODO migrate command arguments
+        //bla!$SERVICEDESC$... - fix vars as runtime macros
+    }
+
+    protected function convertHost_name($name)
     {
         $arr = $this->splitComma($name);
         $this->is_apply = true;
@@ -108,7 +97,7 @@ class Icinga2Service extends Icinga2ObjectDefinition
         }
     }
 
-    protected function convertHostgroup_name($name, IcingaConfig $config = null)
+    protected function convertHostgroup_name($name)
     {
         $arr = $this->splitComma($name);
         $this->is_apply = true;

@@ -18,7 +18,7 @@ class Icinga2Hostgroup extends Icinga2ObjectDefinition
         'hostgroup_members' => 'groups',
     );
 
-    protected function convertMembers($members, IcingaConfig $config = null)
+    protected function convertMembers($members)
     {
         foreach ($this->splitComma($members) as $member) {
             if (substr($member, 0, 1) === '!') {
