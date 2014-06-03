@@ -295,11 +295,15 @@ class Loader
             }
             $search = substr($search, 0, -1);
         }
+
         return false;
     }
 
     public function resolveName($name)
     {
+        var_dump($this->listCommands());
+        var_dump($this->listModules());
+                 
         return $this->searchMatch(
             $name,
             array_merge($this->listCommands(), $this->listModules())
