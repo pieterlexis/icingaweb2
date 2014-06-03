@@ -6,7 +6,7 @@ use Icinga\Cli\Command;
 use Icinga\Module\Conftool\Icinga\IcingaConfig;
 use Icinga\Module\Conftool\Icinga2\Icinga2ObjectDefinition;
 
-class ParseCommand extends Command
+class MigrateCommand extends Command
 {
     public function v1Action()
     {
