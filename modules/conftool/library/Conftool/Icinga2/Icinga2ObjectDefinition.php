@@ -103,8 +103,8 @@ class Icinga2ObjectDefinition
             if ($key == "contacts" && ($object instanceof IcingaService || $object instanceof IcingaHost)) {
                 $arr = $this->splitComma($value);
 
-                var_dump($object);
-                var_dump($arr);
+                //var_dump($object);
+                //var_dump($arr);
 
                 foreach ($arr as $contact) {
 
@@ -114,9 +114,10 @@ class Icinga2ObjectDefinition
 
                     if ($contact_obj == false) {
                         print("Unknown contact '" . $name . "' referenced by object '" . $this->name . "'.");
+                        continue;
                     }
 
-                    var_dump($contact_obj);
+                    //var_dump($contact_obj);
 
                     //TODO
                     //1. host|service_notification_commands in contact template tree?
