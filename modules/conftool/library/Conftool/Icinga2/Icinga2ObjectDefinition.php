@@ -21,7 +21,7 @@ class Icinga2ObjectDefinition
     protected $assigns = array();
     protected $ignores = array();
     protected $imports = array();
-    protected $_config;
+    protected $vars = array();
 
     public function __construct(IcingaObjectDefinition $name)
     {
@@ -53,12 +53,16 @@ class Icinga2ObjectDefinition
         $this->imports[] = $import;
     }
 
+    protected function vars($varname, $varvalue)
+    {
+        $this->vars[$varname] = $varvalue;
+    }
+
     protected function setAttributesFromIcingaObjectDefinition(IcingaObjectDefinition $object, IcingaConfig $config)
     {
         //template, parents and config
         $this->is_template = $object->isTemplate();
         $this->_parents = $object->getParents();
-        //$config = $object->_config;
 
         foreach ($object->getAttributes() as $key => $value) {
 
@@ -81,6 +85,20 @@ class Icinga2ObjectDefinition
                 continue;
             }
 
+            //check command arguments
+            if ($key == "check_command" && ($object instanceof IcingaService || $object instanceof IcingaHost)) {
+                $command_arr = explode("!", $value);
+
+                $this->properties['check_command'] = $command_arr[0]; //first is always the command name
+
+                for($i = 1; $i < count($command_arr); $i++) {
+                    $varname = "ARG".$i;
+                    $varvalue = $command_arr[$i];
+                    //TODO check against legacy macros and replace them
+                    $this->vars($varname, $varvalue);
+                }
+            }
+
             //convert host/service notifications
             if ($key == "contacts" && ($object instanceof IcingaService || $object instanceof IcingaHost)) {
                 $arr = $this->splitComma($value);
@@ -93,6 +111,10 @@ class Icinga2ObjectDefinition
                     //strip additive character
                     $name = preg_replace('/^\+/', '', $contact);
                     $contact_obj = $config->GetObject($name, 'contact');
+
+                    if ($contact_obj == false) {
+                        print("Unknown contact '" . $name . "' referenced by object '" . $this->name . "'.");
+                    }
 
                     var_dump($contact_obj);
 
@@ -138,6 +160,11 @@ class Icinga2ObjectDefinition
             if ($value !== null) {
                 $this->{ $this->v1AttributeMap[$key] } = $value;
             }
+        }
+
+        //custom vars
+        foreach ($object->getCustomVars() as $key => $value) {
+            $this->vars($key, $value);
         }
     }
 
@@ -290,6 +317,14 @@ class Icinga2ObjectDefinition
         return $str;
     }
 
+    protected function getVarsAsString() {
+        $str = '';
+        foreach ($this->vars as $key => $val) {
+            $str .= sprintf("    vars.%s = \"%s\"\n", $key, $val);
+        }
+        return $str;
+    }
+
     protected function getImportsAsString() {
         $str = '';
         foreach ($this->imports as $import) {
@@ -344,6 +379,7 @@ class Icinga2ObjectDefinition
             $this->name,
             $this->getImportsAsString(),
             $this->getAttributesAsString(),
+            $this->getVarsAsString(),
             $this->getAssignmentsAsString()
         );
     }

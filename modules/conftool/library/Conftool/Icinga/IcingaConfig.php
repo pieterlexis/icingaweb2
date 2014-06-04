@@ -467,7 +467,7 @@ class IcingaConfig
 
     public function getObject($search, $type)
     {
-        if (defined($this->definitions[$type][strtolower($search)])) {
+        if (array_key_exists(strtolower($search), $this->definitions[$type])) {
             return $this->definitions[$type][strtolower($search)];
         }
 

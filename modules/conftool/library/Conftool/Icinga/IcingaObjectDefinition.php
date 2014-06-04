@@ -9,7 +9,6 @@ abstract class IcingaObjectDefinition
     protected $_parents = array();
     protected $is_template = false;
     protected $type;
-    protected $_config;
 
     public function __construct($props)
     {
@@ -43,7 +42,7 @@ abstract class IcingaObjectDefinition
         $key = $this->isTemplate() ? 'name' : $this->key;
         foreach ($this->props as $k => $v) {
             if ($key === $k) { continue; }
-            if ($k[0] === '_') { continue; } //required for _parents, _config
+            if ($k[0] === '_') { continue; } //required for _parents
             $res[$k] = $v;
         }
         return $res;
