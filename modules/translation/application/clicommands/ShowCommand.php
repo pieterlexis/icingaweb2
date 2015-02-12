@@ -7,11 +7,14 @@ use Icinga\Module\Translation\Cli\TranslationCommand;
 use Icinga\Application\Icinga;
 use Icinga\File\NonEmptyFileIterator;
 use Icinga\Exception\IcingaException;
+use Icinga\Util\NamedArrayObject;
 
 class ShowCommand extends TranslationCommand
 {
     public function untranslatedAction()
     {
+        $filesTree = array();
+
         foreach (new NonEmptyFileIterator(
             new \RegexIterator(
                 new \RecursiveIteratorIterator(
@@ -30,8 +33,7 @@ class ShowCommand extends TranslationCommand
             }
 
             $matches = array();
-            $cnt = 0;
-            $line = 1;
+            $cnt = $line = 0;
             foreach (str_split($content) as $chr) {
                 switch ($chr) {
                     case "\n":
@@ -39,13 +41,6 @@ class ShowCommand extends TranslationCommand
                         break;
                     case '\'':
                     case '"':
-                        /* TODO (AK):
-                         *
-                         * check for valid string w/ PCRE
-                         * @see http://php.net/manual/de/language.types.string.php#language.types.string.syntax.single
-                         *
-                         * increase $cnt w/ string's size (and skip ++$cnt)
-                         */
                         $result = preg_match(
                             '/\\b(?:translate(?:Plural)?|m?tp?)\\s*\\(\\s*(?!.)/ms',
                             substr($content, 0, $cnt)
@@ -65,8 +60,24 @@ class ShowCommand extends TranslationCommand
                 }
                 ++$cnt;
             }
-            
-            var_dump($matches);
+
+            if (0 !== count($matches)) {
+                $fileTree = new NamedArrayObject($file);
+                $lines = explode("\n", $content);
+                foreach (array_keys($matches) as $line) {
+                    $fileTree->append(sprintf('%d:%s', $line + 1, $lines[$line]));
+                }
+                $filesTree[] = $fileTree;
+            }
+        }
+
+        foreach (new \IteratorIterator(
+            new \RecursiveTreeIterator(
+                new \RecursiveArrayIterator($filesTree),
+                \RecursiveTreeIterator::SELF_FIRST
+            )
+        ) as $val) {
+            echo $val . PHP_EOL;
         }
     }
 }
