@@ -33,17 +33,21 @@ class ShowCommand extends TranslationCommand
             }
 
             $matches = array();
-            $cnt = $line = 0;
-            foreach (str_split($content) as $chr) {
-                switch ($chr) {
+            $chars = str_split($content);
+            $charsAmount = count($chars);
+            $line = 0;
+            for ($i = 0; $i < $charsAmount;) {
+                switch ($chars[$i]) {
                     case "\n":
                         ++$line;
                         break;
                     case '\'':
                     case '"':
+                        $preg_matches = array();
                         $result = preg_match(
-                            '/\\b(?:translate(?:Plural)?|m?tp?)\\s*\\(\\s*(?!.)/ms',
-                            substr($content, 0, $cnt)
+                            '/(\'(?:\\\\[\'\\\\]|[\\x20-\\x7e](?<![\'\\\\]))*\'|"(?:\\\\["\\\\]|[\\x20-\\x7e](?<!["\\\\]))*")(?:\\s*\\.\\s*(?1))*/m',
+                            substr($content, $i),
+                            $preg_matches
                         );
                         if (false === $result) {
                             throw new IcingaException(
@@ -51,14 +55,44 @@ class ShowCommand extends TranslationCommand
                             );
                         }
                         if (0 === $result) {
-                            if (array_key_exists($line, $matches)) {
-                                ++$matches[$line];
-                            } else {
-                                $matches[$line] = 1;
+                            $matches[$line] = false;
+                            while ($chars[++$i] !== "\n");
+                        } else {
+                            if (false === array_key_exists($line, $matches)) {
+                                $matches[$line] = array();
+                            }
+                            $matches[$line][] = $i;
+                            for ($j = strlen($preg_matches[0]); $j > 0; --$j) {
+                                if ($chars[$i++] === "\n") {
+                                    ++$line;
+                                }
                             }
                         }
+                        continue;
                 }
-                ++$cnt;
+                ++$i;
+            }
+
+            foreach ($matches as $linenum => $line) {
+                if ($line !== false) {
+                    foreach ($line as $idx => $pos) {
+                        $result = preg_match(
+                            '/\\b(?:translate(?:Plural)?|m?tp?)\\s*\\(\\s*(?!.)/ms',
+                            substr($content, 0, $pos)
+                        );
+                        if (false === $result) {
+                            throw new IcingaException(
+                                'an unknown error occurred while PCRE matching'
+                            );
+                        }
+                        if (1 === $result) {
+                            unset($line[$idx]);
+                        }
+                    }
+                    if (0 === count($line)) {
+                        unset($matches[$linenum]);
+                    }
+                }
             }
 
             if (0 !== count($matches)) {
