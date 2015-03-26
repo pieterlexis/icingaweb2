@@ -4,6 +4,7 @@
 namespace Icinga\Web\Widget;
 
 use Icinga\Web\Url;
+use Zend_Controller_Front;
 
 /**
  * A single tab, usually used through the tabs widget
@@ -299,6 +300,13 @@ class Tab extends AbstractWidget
             );
         } else {
             $tab = $caption;
+        }
+        if ($this->active) {
+            $tab = sprintf(
+                '<h1 id="%s">%s</h1>',
+                Zend_Controller_Front::getInstance()->getRequest()->protectId($this->name),
+                $caption
+            );
         }
 
         $class = empty($classes) ? '' : sprintf(' class="%s"', implode(' ', $classes));

@@ -3,6 +3,7 @@
 
 namespace Icinga\Web\Widget;
 
+use Zend_Controller_Front;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Tabextension\Tabextension;
@@ -20,7 +21,7 @@ class Tabs extends AbstractWidget implements Countable
      * @var string
      */
     private $baseTpl = <<< 'EOT'
-<ul class="tabs">
+<ul aria-labelledby="{ACTIVE_ID}" class="tabs">
   {TABS}
   {DROPDOWN}
   {REFRESH}
@@ -366,13 +367,15 @@ EOT;
                 '{TABS}',
                 '{DROPDOWN}',
                 '{REFRESH}',
-                '{CLOSE}'
+                '{CLOSE}',
+                '{ACTIVE_ID}'
             ),
             array(
                 $tabs,
                 $drop,
                 $close,
-                $refresh
+                $refresh,
+                Zend_Controller_Front::getInstance()->getRequest()->protectId($this->getActiveName())
             ),
             $this->baseTpl
         );

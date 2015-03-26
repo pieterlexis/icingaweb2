@@ -49,9 +49,24 @@ ul.tabs li.dropdown > a{
   padding: 0 0.4em;
 }
 
-ul.tabs li.active a, ul.tabs li.dropdown:hover a, ul.tabs li.dropdown.hover a {
+ul.tabs li.active a, ul.tabs li.active h1, ul.tabs li.dropdown:hover a, ul.tabs li.dropdown.hover a {
   background-color: white;
   color: black;
+}
+
+ul.tabs li.active h1 {
+  margin: 0;
+  font-size: 1em;
+  display: block;
+  font-weight: normal;
+  border-bottom: 0px;
+
+  padding: 0 1em;
+  line-height: 2.6em;
+  text-decoration: none;
+  white-space: nowrap;
+  outline: 0;
+  margin-right: 0.5em;
 }
 
 .impact ul.tabs li.active a, .impact ul.tabs li.dropdown:hover, .impact ul.tabs li.dropdown.hover a {
