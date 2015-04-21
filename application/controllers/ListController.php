@@ -3,6 +3,9 @@
 
 use Icinga\Module\Monitoring\Controller;
 use Icinga\Web\Url;
+use Icinga\Web\Widget\Tabextension\DashboardAction;
+use Icinga\Web\Widget\Tabextension\OutputFormat;
+use Icinga\Application\Config;
 use Icinga\Application\Logger;
 use Icinga\Data\ConfigObject;
 use Icinga\Protocol\File\FileReader;
@@ -23,12 +26,12 @@ class ListController extends Controller
     protected function addTitleTab($action)
     {
         $this->getTabs()->add($action, array(
-            'title' => ucfirst($action),
+            'label' => ucfirst($action),
             'url' => Url::fromPath(
                     'list/'
                     . str_replace(' ', '', $action)
                 )
-        ))->activate($action);
+        ))->extend(new OutputFormat())->extend(new DashboardAction())->activate($action);
     }
 
     /**
@@ -44,13 +47,15 @@ class ListController extends Controller
         $pattern = '/^(?<datetime>[0-9]{4}(-[0-9]{2}){2}'                 // date
                  . 'T[0-9]{2}(:[0-9]{2}){2}([\\+\\-][0-9]{2}:[0-9]{2})?)' // time
                  . ' - (?<loglevel>[A-Za-z]+)'                            // loglevel
-                 . ' - (?<message>.*)$/';                                 // message
+                 . ' - (?<message>.*)$/';
 
-        $loggerWriter = Logger::getInstance()->getWriter();
         $resource = new FileReader(new ConfigObject(array(
-            'filename'  => $loggerWriter->getPath(),
+            'filename'  => Config::app()->get('logging', 'file'),
             'fields'    => $pattern
         )));
         $this->view->logData = $resource->select()->order('DESC')->paginate();
+
+        $this->setupLimitControl();
+        $this->setupPaginationControl($this->view->logData);
     }
 }

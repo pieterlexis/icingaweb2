@@ -13,6 +13,7 @@ class StyleSheet
         '../application/fonts/fontello-ifont/css/ifont-embedded.css',
         'css/vendor/tipsy.css',
         'css/icinga/defaults.less',
+        'css/icinga/animation.less',
         'css/icinga/layout-colors.less',
         'css/icinga/layout-structure.less',
         'css/icinga/menu.less',
@@ -25,7 +26,8 @@ class StyleSheet
         'css/icinga/pagination.less',
         'css/icinga/monitoring-colors.less',
         'css/icinga/selection-toolbar.less',
-        'css/icinga/login.less'
+        'css/icinga/login.less',
+        'css/icinga/controls.less'
     );
 
     public static function compileForPdf()

@@ -1,20 +1,20 @@
-<?php if (false === $this->compact): ?>
+<?php if (! $this->compact): ?>
 <div class="controls">
-  <?= $this->tabs->render($this); ?>
-  <div style="margin: 1em" class="dontprint">
-    <?= $this->translate('Sort by'); ?> <?= $this->sortControl->render($this); ?>
-  </div>
-  <?= $this->widget('limiter', array('url' => $this->url, 'max' => $comments->count())); ?>
-  <?= $this->paginationControl($comments, null, null, array('preserve' => $this->preserve)); ?>
+  <?= $this->tabs; ?>
+  <?= $this->sortBox; ?>
+  <?= $this->limiter; ?>
+  <?= $this->paginator; ?>
+  <?= $this->filterEditor; ?>
 </div>
 <?php endif ?>
-
 <div class="content">
-<?php if (count($comments) === 0): ?>
-  <?= $this->translate('No comments matching the filter'); ?>
-</div>
-<?php return; endif ?>
+<?php
 
+if (count($comments) === 0) {
+    echo $this->translate('No comments found matching the filter') . '</div>';
+    return;
+}
+?>
   <table data-base-target="_next" class="action comments">
     <tbody>
     <?php foreach ($comments as $comment): ?>
@@ -34,10 +34,12 @@
           $icon = 'plug';
           $title = $this->translate('Downtime');
           $tooltip = $this->translate('Comment was caused by a downtime.');
+          break;
         case 'ack':
           $icon = 'ok';
           $title = $this->translate('Acknowledgement');
           $tooltip = $this->translate('Comment was caused by an acknowledgement.');
+          break;
       }
     ?>
       <tr class="state invalid">
@@ -50,16 +52,19 @@
         </td>
         <td>
         <?php if ($comment->objecttype === 'service'): ?>
-          <?= $this->icon('service') ?>
+          <?= $this->icon('service', $this->translate('Service')); ?>
           <?= $this->link()->service(
-              $comment->service, $comment->service_display_name, $comment->host, $comment->host_display_name
-          ) ?>
+              $comment->service_description,
+              $comment->service_display_name,
+              $comment->host_name,
+              $comment->host_display_name
+          ); ?>
         <?php else: ?>
-          <?= $this->icon('host') ?>
-          <?= $this->link()->host($comment->host, $comment->host_display_name) ?>
+          <?= $this->icon('host', $this->translate('Host')); ?>
+          <?= $this->link()->host($comment->host_name, $comment->host_display_name); ?>
         <?php endif ?>
           <br>
-          <?= $this->icon('comment'); ?> <?= isset($comment->author)
+          <?= $this->icon('comment', $this->translate('Comment')); ?> <?= isset($comment->author)
             ? '[' . $comment->author . '] '
             : '';
           ?><?= $this->escape($comment->comment); ?>
@@ -81,9 +86,14 @@
           $delCommentForm = clone $delCommentForm;
           $delCommentForm->populate(array('comment_id' => $comment->id, 'redirect' => $this->url));
           if ($comment->objecttype === 'host') {
-            $delCommentForm->setAction($this->url('monitoring/host/delete-comment', array('host' => $comment->host)));
+            $delCommentForm->setAction(
+                $this->url('monitoring/host/delete-comment', array('host' => $comment->host_name))
+            );
           } else {
-            $delCommentForm->setAction($this->url('monitoring/service/delete-comment', array('host' => $comment->host, 'service' => $comment->service)));
+            $delCommentForm->setAction($this->url('monitoring/service/delete-comment', array(
+                'host'      => $comment->host_name,
+                'service'   => $comment->service_description
+            )));
           }
           echo $delCommentForm;
           ?>

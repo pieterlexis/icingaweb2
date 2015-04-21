@@ -10,10 +10,12 @@ use Icinga\Module\Monitoring\Forms\Command\Object\ProcessCheckResultCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\RemoveAcknowledgementCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ScheduleHostCheckCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ScheduleHostDowntimeCommandForm;
+use Icinga\Module\Monitoring\Forms\Command\Object\SendCustomNotificationCommandForm;
 use Icinga\Module\Monitoring\Object\Host;
 use Icinga\Module\Monitoring\Object\HostList;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Chart\InlinePie;
+use Icinga\Web\Widget\Tabextension\DashboardAction;
 
 class Monitoring_HostsController extends Controller
 {
@@ -25,7 +27,7 @@ class Monitoring_HostsController extends Controller
     public function init()
     {
         $hostList = new HostList($this->backend);
-        $hostList->setFilter(Filter::fromQueryString((string) $this->params));
+        $hostList->setFilter(Filter::fromQueryString((string) $this->params->without('view')));
         $this->hostList = $hostList;
     }
 
@@ -72,10 +74,14 @@ class Monitoring_HostsController extends Controller
         $this->getTabs()->add(
             'show',
             array(
-                'title' => mt('monitoring', 'Hosts'),
-                'url' => Url::fromRequest()
+                'title' => sprintf(
+                    $this->translate('Show summarized information for %u hosts'),
+                    count($this->hostList)
+                ),
+                'label' => $this->translate('Hosts'),
+                'url'   => Url::fromRequest()
             )
-        )->activate('show');
+        )->extend(new DashboardAction())->activate('show');
         $this->setAutorefreshInterval(15);
         $checkNowForm = new CheckNowCommandForm();
         $checkNowForm
@@ -118,7 +124,7 @@ class Monitoring_HostsController extends Controller
             }
             if ((bool) $host->in_downtime === true) {
                 $objectsInDowntime[] = $host;
-                $downtimeFilterExpressions[] = Filter::where('downtime_host', $host->getName());
+                $downtimeFilterExpressions[] = Filter::where('host_name', $host->getName());
             }
             ++$hostStates[$host::getStateText($host->state)];
         }
@@ -153,6 +159,10 @@ class Monitoring_HostsController extends Controller
             $this->translate('Host State'),
             array('#44bb77', '#FF5566', '#E066FF', '#77AAFF')
         );
+        $this->view->sendCustomNotificationLink =
+            Url::fromRequest()->setPath(
+                'monitoring/hosts/send-custom-notification'
+            );
     }
 
     protected function createPieChart(array $states, $title, array $colors)
@@ -171,8 +181,9 @@ class Monitoring_HostsController extends Controller
     {
         $this->assertPermission('monitoring/command/acknowledge-problem');
 
-        $this->view->title = $this->translate('Acknowledge Host Problems');
-        $this->handleCommandForm(new AcknowledgeProblemCommandForm());
+        $form = new AcknowledgeProblemCommandForm();
+        $form->setTitle($this->translate('Acknowledge Host Problems'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -182,8 +193,9 @@ class Monitoring_HostsController extends Controller
     {
         $this->assertPermission('monitoring/command/schedule-check');
 
-        $this->view->title = $this->translate('Reschedule Host Checks');
-        $this->handleCommandForm(new ScheduleHostCheckCommandForm());
+        $form = new ScheduleHostCheckCommandForm();
+        $form->setTitle($this->translate('Reschedule Host Checks'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -193,8 +205,9 @@ class Monitoring_HostsController extends Controller
     {
         $this->assertPermission('monitoring/command/downtime/schedule');
 
-        $this->view->title = $this->translate('Schedule Host Downtimes');
-        $this->handleCommandForm(new ScheduleHostDowntimeCommandForm());
+        $form = new ScheduleHostDowntimeCommandForm();
+        $form->setTitle($this->translate('Schedule Host Downtimes'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -204,7 +217,20 @@ class Monitoring_HostsController extends Controller
     {
         $this->assertPermission('monitoring/command/process-check-result');
 
-        $this->view->title = $this->translate('Submit Passive Host Check Results');
-        $this->handleCommandForm(new ProcessCheckResultCommandForm());
+        $form = new ProcessCheckResultCommandForm();
+        $form->setTitle($this->translate('Submit Passive Host Check Results'));
+        $this->handleCommandForm($form);
+    }
+
+    /**
+     * Send a custom notification for hosts
+     */
+    public function sendCustomNotificationAction()
+    {
+        $this->assertPermission('monitoring/command/send-custom-notification');
+
+        $form = new SendCustomNotificationCommandForm();
+        $form->setTitle($this->translate('Send Custom Host Notification'));
+        $this->handleCommandForm($form);
     }
 }

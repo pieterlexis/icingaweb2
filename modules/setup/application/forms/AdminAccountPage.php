@@ -44,7 +44,7 @@ class AdminAccountPage extends Form
      *
      * @param   array   $config
      *
-     * @return  self
+     * @return  $this
      */
     public function setResourceConfig(array $config)
     {
@@ -57,7 +57,7 @@ class AdminAccountPage extends Form
      *
      * @param   array   $config
      *
-     * @return  self
+     * @return  $this
      */
     public function setBackendConfig(array $config)
     {
@@ -192,31 +192,6 @@ class AdminAccountPage extends Form
                 )
             );
         }
-
-        $this->addElement(
-            'note',
-            'title',
-            array(
-                'value'         => $this->translate('Administration', 'setup.page.title'),
-                'decorators'    => array(
-                    'ViewHelper',
-                    array('HtmlTag', array('tag' => 'h2'))
-                )
-            )
-        );
-        $this->addElement(
-            'note',
-            'description',
-            array(
-                'value' => tp(
-                    'Now it\'s time to configure your first administrative account for Icinga Web 2.'
-                    . ' Please follow the instructions below:',
-                    'Now it\'s time to configure your first administrative account for Icinga Web 2.'
-                    . ' Below are several options you can choose from. Select one and follow its instructions:',
-                    count($choices)
-                )
-            )
-        );
     }
 
     /**
@@ -297,7 +272,8 @@ class AdminAccountPage extends Form
                 ResourceFactory::createResource(new ConfigObject($this->resourceConfig)),
                 $this->backendConfig['user_class'],
                 $this->backendConfig['user_name_attribute'],
-                $this->backendConfig['base_dn']
+                $this->backendConfig['base_dn'],
+                $this->backendConfig['filter']
             );
         } else {
             throw new LogicException(
@@ -309,7 +285,9 @@ class AdminAccountPage extends Form
         }
 
         try {
-            return $backend->listUsers();
+            $users = $backend->listUsers();
+            natsort ($users);
+            return $users;
         } catch (Exception $e) {
             // No need to handle anything special here. Error means no users found.
             return array();

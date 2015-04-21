@@ -10,11 +10,13 @@ use Icinga\Module\Monitoring\Forms\Command\Object\ProcessCheckResultCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\RemoveAcknowledgementCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ScheduleServiceCheckCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ScheduleServiceDowntimeCommandForm;
+use Icinga\Module\Monitoring\Forms\Command\Object\SendCustomNotificationCommandForm;
 use Icinga\Module\Monitoring\Object\Host;
 use Icinga\Module\Monitoring\Object\Service;
 use Icinga\Module\Monitoring\Object\ServiceList;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Chart\InlinePie;
+use Icinga\Web\Widget\Tabextension\DashboardAction;
 
 class Monitoring_ServicesController extends Controller
 {
@@ -26,7 +28,9 @@ class Monitoring_ServicesController extends Controller
     public function init()
     {
         $serviceList = new ServiceList($this->backend);
-        $serviceList->setFilter(Filter::fromQueryString((string) $this->params->without('service_problem', 'service_handled')));
+        $serviceList->setFilter(Filter::fromQueryString(
+            (string) $this->params->without(array('service_problem', 'service_handled', 'view'))
+        ));
         $this->serviceList = $serviceList;
     }
 
@@ -93,10 +97,14 @@ class Monitoring_ServicesController extends Controller
         $this->getTabs()->add(
             'show',
             array(
-                'title' => mt('monitoring', 'Services'),
-                'url' => Url::fromRequest()
+                'title' => sprintf(
+                    $this->translate('Show summarized information for %u services'),
+                    count($this->serviceList)
+                ),
+                'label' => $this->translate('Services'),
+                'url'   => Url::fromRequest()
             )
-        )->activate('show');
+        )->extend(new DashboardAction())->activate('show');
         $this->setAutorefreshInterval(15);
         $checkNowForm = new CheckNowCommandForm();
         $checkNowForm
@@ -153,8 +161,8 @@ class Monitoring_ServicesController extends Controller
             if ((bool) $service->in_downtime === true) {
                 $objectsInDowntime[] = $service;
                 $downtimeFilterExpressions[] = Filter::matchAll(
-                    Filter::where('downtime_host', $service->getHost()->getName()),
-                    Filter::where('downtime_service', $service->getName())
+                    Filter::where('host_name', $service->getHost()->getName()),
+                    Filter::where('service_description', $service->getName())
                 );
             }
             ++$serviceStates[$service::getStateText($service->state)];
@@ -202,6 +210,10 @@ class Monitoring_ServicesController extends Controller
             $this->translate('Host State'),
             array('#44bb77', '#FF5566', '#E066FF', '#77AAFF')
         );
+        $this->view->sendCustomNotificationLink =
+            Url::fromRequest()->setPath(
+                'monitoring/services/send-custom-notification'
+            );
     }
 
     protected function createPieChart(array $states, $title, array $colors)
@@ -220,8 +232,9 @@ class Monitoring_ServicesController extends Controller
     {
         $this->assertPermission('monitoring/command/acknowledge-problem');
 
-        $this->view->title = $this->translate('Acknowledge Service Problems');
-        $this->handleCommandForm(new AcknowledgeProblemCommandForm());
+        $form = new AcknowledgeProblemCommandForm();
+        $form->setTitle($this->translate('Acknowledge Service Problems'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -231,8 +244,9 @@ class Monitoring_ServicesController extends Controller
     {
         $this->assertPermission('monitoring/command/schedule-check');
 
-        $this->view->title = $this->translate('Reschedule Service Checks');
-        $this->handleCommandForm(new ScheduleServiceCheckCommandForm());
+        $form = new ScheduleServiceCheckCommandForm();
+        $form->setTitle($this->translate('Reschedule Service Checks'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -242,8 +256,9 @@ class Monitoring_ServicesController extends Controller
     {
         $this->assertPermission('monitoring/command/downtime/schedule');
 
-        $this->view->title = $this->translate('Schedule Service Downtimes');
-        $this->handleCommandForm(new ScheduleServiceDowntimeCommandForm());
+        $form = new ScheduleServiceDowntimeCommandForm();
+        $form->setTitle($this->translate('Schedule Service Downtimes'));
+        $this->handleCommandForm($form);
     }
 
     /**
@@ -253,7 +268,20 @@ class Monitoring_ServicesController extends Controller
     {
         $this->assertPermission('monitoring/command/process-check-result');
 
-        $this->view->title = $this->translate('Submit Passive Service Check Results');
-        $this->handleCommandForm(new ProcessCheckResultCommandForm());
+        $form = new ProcessCheckResultCommandForm();
+        $form->setTitle($this->translate('Submit Passive Service Check Results'));
+        $this->handleCommandForm($form);
+    }
+
+    /**
+     * Send a custom notification for services
+     */
+    public function sendCustomNotificationAction()
+    {
+        $this->assertPermission('monitoring/command/send-custom-notification');
+
+        $form = new SendCustomNotificationCommandForm();
+        $form->setTitle($this->translate('Send Custom Service Notification'));
+        $this->handleCommandForm($form);
     }
 }

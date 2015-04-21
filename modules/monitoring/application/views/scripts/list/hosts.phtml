@@ -1,33 +1,25 @@
 <?php
 use Icinga\Module\Monitoring\Object\Host;
 
-if ($this->compact): ?>
-<div class="content">
-<?php else: ?>
+if (! $this->compact): ?>
 <div class="controls">
-  <?= $this->tabs ?>
-  <div style="margin: 1em;" class="dontprint">
-    <?= $this->render('list/components/selectioninfo.phtml') ?>
-    <?= $this->render('list/components/hostssummary.phtml') ?>
-    <?= $this->translate('Sort by') ?> <?= $this->sortControl->render($this) ?>
+  <?= $this->tabs; ?>
+  <div class="dontprint">
+    <?= $this->render('list/components/selectioninfo.phtml'); ?>
+    <?= $this->render('list/components/hostssummary.phtml'); ?>
   </div>
-
-<?= $this->widget('limiter')->setMaxLimit($this->hosts->count()) ?>
-<?= $this->paginationControl($hosts, null, null, array('preserve' => $this->preserve)) ?>
-<?= $this->selectionToolbar('multi', $this->href('monitoring/hosts/show?' . $this->filter->toQueryString())) ?>
+  <?= $this->sortBox; ?>
+  <?= $this->limiter; ?>
+  <?= $this->paginator; ?>
+  <?= $this->selectionToolbar('multi', $this->href('monitoring/hosts/show?' . $this->filter->toQueryString())); ?>
+  <?= $this->filterEditor; ?>
 </div>
-
+<?php endif ?>
 <div class="content">
-<?= $this->filterEditor ?>
 <?php
 
-endif;
-
-if ($hosts->count() === 0) {
-    echo $this->translate('No hosts matching the filter');
-    if (! $this->compact) {
-        echo '</div>';
-    }
+if (count($hosts) === 0) {
+    echo $this->translate('No hosts found matching the filter') . '</div>';
     return;
 }
 ?>
@@ -74,7 +66,7 @@ if ($hosts->count() === 0) {
     }
 
     if (isset($host->host_last_comment) && $host->host_last_comment !== null) {
-        $icons[] = $this->icon('comment', $this->translate('Comment: ') . $host->host_last_comment);
+        $icons[] = $this->icon('comment', $this->translate('Last Comment: ') . $host->host_last_comment);
     }
     ?>
     <tr class="state <?= $hostStateName ?><?= $host->host_handled ? ' handled' : '' ?>">
@@ -96,11 +88,18 @@ if ($hosts->count() === 0) {
         <?= $this->icon($this->resolveMacros($host->host_icon_image, $host)) ?>
         <?php endif ?>
         <?= implode(' ', $icons) ?>
-        <a href="<?= $hostLink  ?>"><?= $this->escape($host->host_display_name) ?></a>
+        <?= $this->qlink(
+          $host->host_display_name,
+          $hostLink,
+          null,
+          array(
+            'title' => sprintf($this->translate('Show detailed information for host %s'), $host->host_display_name)
+          )
+        ); ?>
         <?php if (isset($host->host_unhandled_services) && $host->host_unhandled_services > 0): ?>
         <span> (<?= $this->qlink(
           sprintf(
-            $this->translatePlural('%d unhandled service', '%d unhandled services', $host->host_unhandled_services),
+            $this->translatePlural('%u unhandled service', '%u unhandled services', $host->host_unhandled_services),
             $host->host_unhandled_services
           ),
           'monitoring/show/services',
@@ -113,8 +112,8 @@ if ($hosts->count() === 0) {
             'style' => 'font-weight: normal',
             'title' => sprintf(
               $this->translatePlural(
-                'List %s service problem on host %s',
-                'List %s service problems on host %s',
+                'List %s unhandled service problem on host %s',
+                'List %s unhandled service problems on host %s',
                 $host->host_unhandled_services
               ),
               $host->host_unhandled_services,
