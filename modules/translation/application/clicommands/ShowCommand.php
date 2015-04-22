@@ -21,6 +21,7 @@ use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Scalar\Encapsed;
+use PhpParser\Node\Stmt\Throw_;
 
 class ShowCommand extends TranslationCommand
 {
@@ -85,6 +86,10 @@ class ShowCommand extends TranslationCommand
                 $this->scanNodes($node, $result);
             }
         } else if ($nodes instanceof Node) {
+            if ($nodes instanceof Throw_) {
+                return;
+            }
+
             if ((
                 (
                     $nodes instanceof MethodCall || $nodes instanceof StaticCall
