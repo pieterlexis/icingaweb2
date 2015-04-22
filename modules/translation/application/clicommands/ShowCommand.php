@@ -3,16 +3,31 @@
 
 namespace Icinga\Module\Translation\Clicommands;
 
+require 'PHP-Parser/lib/bootstrap.php';
+
 use Icinga\Module\Translation\Cli\TranslationCommand;
 use Icinga\Application\Icinga;
 use Icinga\File\NonEmptyFileIterator;
 use Icinga\Exception\IcingaException;
 use Icinga\Util\NamedArrayObject;
 
+use PhpParser\Node;
+use PhpParser\Parser;
+use PhpParser\Lexer;
+use PhpParser\Error;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Scalar\Encapsed;
+
 class ShowCommand extends TranslationCommand
 {
     public function untranslatedAction()
     {
+        $parser = new Parser(new Lexer());
+
         $filesTree = array();
 
         foreach (new NonEmptyFileIterator(
@@ -32,78 +47,22 @@ class ShowCommand extends TranslationCommand
                 throw new IcingaException('could not get "%s"\'s content', $file);
             }
 
+            try {
+                $stmts = $parser->parse($content);
+            } catch (Error $e) {
+                continue;
+            }
+
             $matches = array();
-            $chars = str_split($content);
-            $charsAmount = count($chars);
-            $line = 0;
-            for ($i = 0; $i < $charsAmount;) {
-                switch ($chars[$i]) {
-                    case "\n":
-                        ++$line;
-                        break;
-                    case '\'':
-                    case '"':
-                        $preg_matches = array();
-                        $result = preg_match(
-                            '/('
-                                . '\'(?:\\\\[\'\\\\]|(?:\\\\)?[\\t\\r\\n\\x20-\\x7e](?<![\'\\\\]))*\'' // 'string'
-                                . '|'
-                                . '"(?:\\\\["\\\\]|(?:\\\\)?[\\t\\r\\n\\x20-\\x7e](?<!["\\\\]))*"' // "string"
-                            . ')(?:\\s*\\.\\s*(?1))*/m',
-                            substr($content, $i),
-                            $preg_matches
-                        );
-                        if (false === $result) {
-                            throw new IcingaException(
-                                'an unknown error occurred while PCRE matching'
-                            );
-                        }
-                        if (0 === $result) {
-                            $matches[$line] = false;
-                            while ($chars[++$i] !== "\n");
-                        } else {
-                            if (false === array_key_exists($line, $matches)) {
-                                $matches[$line] = array();
-                            }
-                            $matches[$line][] = $i;
-                            for ($j = strlen($preg_matches[0]); $j > 0; --$j) {
-                                if ($chars[$i++] === "\n") {
-                                    ++$line;
-                                }
-                            }
-                        }
-                        continue;
-                }
-                ++$i;
-            }
 
-            foreach ($matches as $linenum => $line) {
-                if ($line !== false) {
-                    foreach ($line as $idx => $pos) {
-                        $result = preg_match(
-                            '/\\b(?:translate(?:Plural)?|m?tp?)\\s*\\(\\s*(?!.)/ms',
-                            substr($content, 0, $pos)
-                        );
-                        if (false === $result) {
-                            throw new IcingaException(
-                                'an unknown error occurred while PCRE matching'
-                            );
-                        }
-                        if (1 === $result) {
-                            unset($line[$idx]);
-                        }
-                    }
-                    if (0 === count($line)) {
-                        unset($matches[$linenum]);
-                    }
-                }
-            }
+            $this->scanNodes($stmts, $matches);
 
-            if (0 !== count($matches)) {
+            if (false === empty($matches)) {
+                $lines = file($file, FILE_IGNORE_NEW_LINES);
                 $fileTree = new NamedArrayObject($file);
-                $lines = explode("\n", $content);
-                foreach (array_keys($matches) as $line) {
-                    $fileTree->append(sprintf('%d:%s', $line + 1, $lines[$line]));
+                foreach ($matches as $match) {
+                    $startLine = $match->getAttribute('startLine', 1);
+                    $fileTree->append(sprintf('%d:%s', $startLine, $lines[$startLine - 1]));
                 }
                 $filesTree[] = $fileTree;
             }
@@ -116,6 +75,36 @@ class ShowCommand extends TranslationCommand
             )
         ) as $val) {
             echo $val . PHP_EOL;
+        }
+    }
+
+    protected function scanNodes($nodes, array &$result)
+    {
+        if (is_array($nodes)) {
+            foreach ($nodes as $node) {
+                $this->scanNodes($node, $result);
+            }
+        } else if ($nodes instanceof Node) {
+            if ((
+                (
+                    $nodes instanceof MethodCall || $nodes instanceof StaticCall
+                ) && $nodes->name === 'translate'
+            ) || (
+                $nodes instanceof FuncCall && $nodes->name instanceof Name
+                &&
+                1 === count($nodes->name->parts) && $nodes->name->parts[0] === 't'
+            )) {
+                return;
+            }
+
+            if ($nodes instanceof String_ || $nodes instanceof Encapsed) {
+                $result[] = $nodes;
+                return;
+            }
+
+            foreach ($nodes->getSubNodeNames() as $subNodeName) {
+                $this->scanNodes($nodes->{$subNodeName}, $result);
+            }
         }
     }
 }
