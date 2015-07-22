@@ -10,6 +10,8 @@ use Icinga\Module\Monitoring\Forms\Command\Object\SendCustomNotificationCommandF
 use Icinga\Module\Monitoring\Object\Host;
 use Icinga\Module\Monitoring\Web\Controller\MonitoredObjectController;
 use Icinga\Web\Hook;
+use Icinga\Web\Navigation\Navigation;
+use Icinga\Web\Navigation\NavigationRenderer;
 
 class Monitoring_HostController extends MonitoredObjectController
 {
@@ -37,21 +39,23 @@ class Monitoring_HostController extends MonitoredObjectController
     }
 
     /**
-     * Get host actions from hook
+     * Get host actions
      *
-     * @return array
+     * @return Navigation
      */
-    protected function getHostActions()
+    protected function getHostActionsNavigation()
     {
-        $urls = array();
-
+        $navigation = $this->getObjectActionsNavigation();
+        /*
+         * Hook based action links
+         */
         foreach (Hook::all('Monitoring\\HostActions') as $hook) {
-            foreach ($hook->getActionsForHost($this->object) as $id => $url) {
-                $urls[$id] = $url;
+            foreach ($hook->getActionsForHost($this->object) as $item) {
+                $navigation->addItem($item);
             }
         }
 
-        return $urls;
+        return $navigation;
     }
 
     /**
@@ -59,7 +63,9 @@ class Monitoring_HostController extends MonitoredObjectController
      */
     public function showAction()
     {
-        $this->view->actions = $this->getHostActions();
+        $this->view->actions = new NavigationRenderer(
+                $this->getHostActionsNavigation()
+        );
         parent::showAction();
     }
 

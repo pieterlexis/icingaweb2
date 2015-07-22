@@ -1,25 +1,12 @@
 <?php
-
+// @todo(mh) Add this back to the navigation renderer
 // add warning to links that open in new tabs to improve accessibility, as recommended by WCAG20 G201
-$newTabInfo = sprintf('<span class="info-box display-on-hover"> %s </span>', $this->translate('opens in new window'));
-
-$links = $object->getActionUrls();
-foreach ($links as $i => $link) {
-    $links[$i] = sprintf('<a href="%s" target="_blank">%s ' . $newTabInfo . '</a>', $link, 'Action');
-}
-
-if (isset($this->actions)) {
-    foreach ($this->actions as $id => $action) {
-        $links[] = sprintf('<a href="%s">%s</a>', $action, $id);
-    }
-}
-
-if (empty($links)) {
+// $newTabInfo = sprintf('<span class="info-box display-on-hover"> %s </span>', $this->translate('opens in new window'));
+if (empty($this->actions)) {
     return;
 }
-
 ?>
 <tr>
   <th><?= $this->translate('Actions') ?></th>
-  <td><?= implode("<br>", $links) ?></td>
+  <td><?= $this->actions->render(); ?></td>
 </tr>

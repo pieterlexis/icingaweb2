@@ -11,6 +11,8 @@ use Icinga\Module\Monitoring\Forms\Command\Object\ObjectsCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\RemoveAcknowledgementCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ToggleObjectFeaturesCommandForm;
 use Icinga\Web\Hook;
+use Icinga\Web\Navigation\Navigation;
+use Icinga\Web\Navigation\NavigationItem;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Tabextension\DashboardAction;
 
@@ -92,6 +94,25 @@ abstract class MonitoredObjectController extends Controller
             $this->view->delDowntimeForm = $delDowntimeForm;
         }
         $this->view->object = $this->object;
+    }
+
+    /**
+     * Get action links from object
+     *
+     * @return Navigation
+     */
+    public function getObjectActionsNavigation()
+    {
+        $navigation = new Navigation();
+        $links = $this->object->getActionUrls();
+        foreach ($links as $link) {
+            $item = new NavigationItem();
+            $item->setUrl($link);
+            $item->setLabel($this->translate('Action'));
+            $navigation->addItem($item);
+        }
+
+        return $navigation;
     }
 
     /**

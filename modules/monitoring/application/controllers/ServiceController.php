@@ -10,6 +10,8 @@ use Icinga\Module\Monitoring\Forms\Command\Object\SendCustomNotificationCommandF
 use Icinga\Module\Monitoring\Object\Service;
 use Icinga\Module\Monitoring\Web\Controller\MonitoredObjectController;
 use Icinga\Web\Hook;
+use Icinga\Web\Navigation\Navigation;
+use Icinga\Web\Navigation\NavigationRenderer;
 
 class Monitoring_ServiceController extends MonitoredObjectController
 {
@@ -39,21 +41,21 @@ class Monitoring_ServiceController extends MonitoredObjectController
     }
 
     /**
-     * Get service actions from hook
+     * Get service actions
      *
-     * @return array
+     * @return Navigation
      */
-    protected function getServiceActions()
+    protected function getServiceActionsNavigation()
     {
-        $urls = array();
+        $navigation = $this->getObjectActionsNavigation();
 
         foreach (Hook::all('Monitoring\\ServiceActions') as $hook) {
-            foreach ($hook->getActionsForService($this->object) as $id => $url) {
-                $urls[$id] = $url;
+            foreach ($hook->getActionsForService($this->object) as $item) {
+                $navigation->addItem($item);
             }
         }
 
-        return $urls;
+        return $navigation;
     }
 
     /**
@@ -61,7 +63,9 @@ class Monitoring_ServiceController extends MonitoredObjectController
      */
     public function showAction()
     {
-        $this->view->actions = $this->getServiceActions();
+        $this->view->actions = new NavigationRenderer(
+                $this->getServiceActionsNavigation()
+        );
         parent::showAction();
     }
 
