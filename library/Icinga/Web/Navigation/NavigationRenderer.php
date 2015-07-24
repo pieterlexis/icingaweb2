@@ -4,6 +4,7 @@
 namespace Icinga\Web\Navigation;
 
 use ArrayIterator;
+use Icinga\Web\Url;
 use RecursiveIterator;
 use Icinga\Application\Icinga;
 use Icinga\Web\View;
@@ -371,10 +372,14 @@ class NavigationRenderer implements RecursiveIterator, NavigationRendererInterfa
             $label = $view->icon($icon) . $label;
         }
         if (($url = $item->getUrl()) !== null) {
+            $url = $item->getUrl();
+            if ($url instanceof Url) {
+                $url = $view->url($item->getUrl(), $item->getUrlParameters());
+            }
             $content = sprintf(
                 '<a%s href="%s">%s</a>',
                 $view->propertiesToString($item->getAttributes()),
-                $view->url($item->getUrl(), $item->getUrlParameters()),
+                $url,
                 $label
             );
         } else {

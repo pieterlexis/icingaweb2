@@ -333,7 +333,7 @@ class NavigationItem implements Countable, IteratorAggregate
      */
     public function setUrl($url)
     {
-        if (! $url instanceof Url) {
+        if (! $url instanceof Url && strpos($url, '://') === false) {
             $url = Url::fromPath((string) $url);
         }
         $this->url = $url;
