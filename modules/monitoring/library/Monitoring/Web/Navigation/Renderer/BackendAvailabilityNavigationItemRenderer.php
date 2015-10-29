@@ -16,7 +16,13 @@ class BackendAvailabilityNavigationItemRenderer extends BadgeNavigationItemRende
      */
     protected function isCurrentlyRunning()
     {
-        $programStatus = MonitoringBackend::instance()
+        try {
+            $backend = MonitoringBackend::instance();
+        } catch (Exception $e) {
+            return false;
+        }
+
+        $programStatus = $backend
             ->select()
             ->from(
                 'programstatus',
@@ -62,9 +68,15 @@ class BackendAvailabilityNavigationItemRenderer extends BadgeNavigationItemRende
      */
     public function getTitle()
     {
+        try {
+            $backend = MonitoringBackend::instance();
+        } catch (Exception $e) {
+            return 'not found';
+        }
+
         return sprintf(
             mt('monitoring', 'Monitoring backend %s is not running'),
-            MonitoringBackend::instance()->getName()
+            $backend->getName()
         );
     }
 }

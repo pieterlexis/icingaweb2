@@ -147,8 +147,14 @@ class MonitoringBadgeNavigationItemRenderer extends SummaryNavigationItemRendere
      */
     protected static function summary($view)
     {
+        try {
+            $backend = MonitoringBackend::instance();
+        } catch (Exception $e) {
+            return null;
+        }
+
         if (! isset(self::$summaries[$view])) {
-            $summary = MonitoringBackend::instance()->select()->from(
+            $summary = $backend->select()->from(
                 $view,
                 self::$dataViews[$view]
             );
