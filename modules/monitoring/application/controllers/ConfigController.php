@@ -13,12 +13,23 @@ use Icinga\Module\Monitoring\Controller;
 use Icinga\Module\Monitoring\Forms\Config\BackendConfigForm;
 use Icinga\Module\Monitoring\Forms\Config\SecurityConfigForm;
 use Icinga\Module\Monitoring\Forms\Config\TransportConfigForm;
+use Icinga\Web\Url;
 
 /**
  * Configuration controller for editing monitoring resources
  */
 class ConfigController extends Controller
 {
+
+    /**
+     * override parent module initialitation
+     */
+    protected function moduleInit()
+    {
+        $this->backend = null;
+        $this->view->url = Url::fromRequest();
+    }
+
     /**
      * Display a list of available backends and command transports
      */
