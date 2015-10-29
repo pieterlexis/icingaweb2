@@ -15,6 +15,11 @@ if (isset($_SERVER['REQUEST_URI'])) {
     return false;
 }
 
+// import environment into the server array, so setting of ICINGAWEB_CONFIGDIR and REMOTE_USER gets used by icingaweb2
+// but make sure, _SERVER has priority
+// Please not that this requires php-cli to have the following option set: variables_order=EGPCS
+$_SERVER = array_merge($_ENV, $_SERVER);
+
 // Workaround, PHPs internal Webserver seems to mess up SCRIPT_FILENAME
 // as it prefixes it's absolute path with DOCUMENT_ROOT
 if (preg_match('/^PHP .* Development Server/', $_SERVER['SERVER_SOFTWARE'])) {
@@ -108,4 +113,3 @@ if (in_array($path, $special)) {
     include __DIR__ . '/Web.php';
     Web::start()->dispatch();
 }
-
