@@ -92,8 +92,15 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
     {
         if (self::$purifier === null) {
             require_once 'HTMLPurifier/Bootstrap.php';
-            require_once 'HTMLPurifier/HTMLPurifier.php';
-            require_once 'HTMLPurifier/HTMLPurifier.autoload.php';
+            try {
+                require_once 'HTMLPurifier.php';
+                require_once 'HTMLPurifier.autoload.php';
+
+            } catch (ErrorException $e) {
+                // loading failed, try to load old location
+                require_once 'HTMLPurifier/HTMLPurifier.php';
+                require_once 'HTMLPurifier/HTMLPurifier.autoload.php';
+            }
 
             $config = HTMLPurifier_Config::createDefault();
             $config->set('Core.EscapeNonASCIICharacters', true);
